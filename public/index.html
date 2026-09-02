@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#4f46e5">
 <title>mTracker - سیستم استمرار (SD Method)</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234f46e5'/%3E%3Ctext x='16' y='22' font-size='16' font-weight='bold' font-family='sans-serif' fill='white' text-anchor='middle'%3Em%3C/text%3E%3C/svg%3E">
+<link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;800&display=swap" rel="stylesheet">
@@ -220,6 +222,9 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:0;border
 /* ---------- theme button ---------- */
 .theme-btn{width:35px;height:35px;border-radius:10px;border:1px solid var(--line);background:transparent;cursor:pointer;font-size:1rem;display:grid;place-items:center;color:var(--ink);flex:none;padding:0}
 .theme-btn:hover{filter:brightness(.96)}
+.linechart,.bars{user-select:none;-webkit-user-select:none}
+.linechart{touch-action:manipulation}
+.btn,.tabs button,.seg button,.bar-col.clickable{touch-action:manipulation}
 
 /* ---------- settings ---------- */
 .set-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
@@ -236,10 +241,30 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:0;border
 #day-pop .dp-row b{font-weight:700}
 
 @media (max-width:640px){
-  .topbar-inner{flex-wrap:wrap}
+  .topbar-inner{flex-wrap:wrap;gap:10px;padding:8px 12px}
   .tabs{margin-inline-start:0;width:100%;justify-content:stretch}
-  .tabs button{flex:1;text-align:center;padding:6px 8px}
+  .tabs button{flex:1;text-align:center;padding:7px 6px;font-size:.8rem}
+  .theme-btn{width:32px;height:32px}
+  .wrap{padding:14px 12px 80px}
+  .card{padding:15px;border-radius:12px}
+  .hero{margin-bottom:14px;gap:10px}
+  .hero-date{font-size:1.12rem}
+  .month-nav{flex-wrap:wrap;gap:10px}
+  .month-nav .spacer{display:none}
+  .month-nav input[type="date"]{width:132px !important}
+  .period-bar{gap:8px}
+  .seg button{padding:5px 10px}
+  .stats{grid-template-columns:repeat(auto-fit,minmax(108px,1fr));gap:8px}
+  .stat{padding:8px 10px}
+  .s-value{font-size:1rem}
+  .today-hours{font-size:1.3rem}
   .quick{margin-inline-start:0;width:100%}
+  .day-task .d-actions{margin-inline-start:0;width:100%}
+  .modal{padding:18px;max-width:100%}
+  .modal-actions{flex-wrap:wrap}
+  .custom-dates input{width:128px}
+  .bars{height:104px}
+  #toast{bottom:14px;width:max-content;max-width:92vw}
 }
 </style>
 <script>
@@ -624,17 +649,20 @@ function lineChartHTML(days, series, opts = {}) {
   if (!n) return '<div class="chart-empty">داده‌ای برای نمایش نیست</div>';
   const { mean = 0, target = 0, clickable = true, h = 190, hoverDay = false } = opts;
   const rtl = appSettings().chartDir === 'rtl';
-  const W = 700, padR = rtl ? 42 : 14, padL = rtl ? 10 : 46, padT = 14, padB = 26;
+  const mobile = typeof window !== 'undefined' && window.innerWidth && window.innerWidth < 640;
+  const W = mobile ? 360 : 700;
+  const padR = rtl ? 64 : 14, padL = rtl ? 14 : 64, padT = 14, padB = 26;
   const H = Math.max(h, 90);
   const plotW = W - padR - padL, plotH = H - padT - padB;
   let maxV = target || 0;
   for (const s of series) for (const v of s.values) if (v != null && v > maxV) maxV = v;
   if (mean > maxV) maxV = mean;
   maxV = Math.max(maxV, 1) * 1.15;
-  const step = n === 1 ? plotW / 2 : plotW / (n - 1);
-  const X = i => rtl ? W - padR - i * step : padL + i * step;
+  const insetX = 14;
+  const step = n === 1 ? (plotW - 2 * insetX) / 2 : (plotW - 2 * insetX) / (n - 1);
+  const X = i => rtl ? W - padR - insetX - i * step : padL + insetX + i * step;
   const Y = v => padT + (1 - v / maxV) * plotH;
-  const yLabX = rtl ? W - padR + 6 : padL - 6;
+  const yLabX = rtl ? W - padR + 8 : padL - 8;
   const yLabAnchor = rtl ? 'start' : 'end';
 
   let grid = '';
@@ -651,8 +679,10 @@ function lineChartHTML(days, series, opts = {}) {
     if (n === 1 && i !== 0) continue;
     const anchor = i === 0 ? (rtl ? 'end' : 'start') : (i === n - 1 ? (rtl ? 'start' : 'end') : 'middle');
     const x = X(i).toFixed(1);
-    ticks += '<line class="lc-axis" x1="' + x + '" y1="' + (H - padB) + '" x2="' + x + '" y2="' + (H - padB + 4) + '"/>' +
-      '<text x="' + x + '" y="' + (H - 8) + '" text-anchor="' + anchor + '">' + (n > 10 ? FA_NUM.format(j.jd) : jShortLabel(days[i].date)) + '</text>';
+    ticks += '<line class="lc-axis" x1="' + x + '" y1="' + (H - padB) + '" x2="' + x + '" y2="' + (H - padB + 4) + '"/>';
+    if (i !== 0) {
+      ticks += '<text x="' + x + '" y="' + (H - 8) + '" text-anchor="' + anchor + '">' + (n > 10 ? FA_NUM.format(j.jd) : jShortLabel(days[i].date)) + '</text>';
+    }
   }
   let paths = '';
   for (const s of series) {
@@ -675,12 +705,13 @@ function lineChartHTML(days, series, opts = {}) {
         if (v == null) continue;
         const cx = X(i).toFixed(1), cy = Y(v).toFixed(1);
         if (hoverDay) {
-          dots += '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="' + s.color + '" class="lc-dot" data-hover-day="' + days[i].date + '"/>';
+          dots += '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="' + s.color + '" class="lc-dot"/>';
+          dots += '<circle cx="' + cx + '" cy="' + cy + '" r="12" fill="transparent" class="lc-dot" data-hover-day="' + days[i].date + '"/>';
           continue;
         }
         dots += '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="' + s.color + '"' + (clickable && s.taskId ? ' class="lc-dot"' : '') + '><title>' + jDayLabel(days[i].date) + ': ' + fmtHours(v) + ' ساعت</title></circle>';
         if (clickable && s.taskId) {
-          dots += '<circle cx="' + cx + '" cy="' + cy + '" r="8" fill="transparent" class="lc-dot" data-action="edit-day" data-task="' + s.taskId + '" data-date="' + days[i].date + '"/>';
+          dots += '<circle cx="' + cx + '" cy="' + cy + '" r="12" fill="transparent" class="lc-dot" data-action="edit-day" data-task="' + s.taskId + '" data-date="' + days[i].date + '"/>';
         }
       }
     }
@@ -1007,6 +1038,7 @@ function render() {
   document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === state.tab));
   const tb = $('#theme-btn');
   if (tb) tb.textContent = document.documentElement.dataset.theme === 'dark' ? '☀' : '☾';
+  hideDayPop();
 }
 
 /* =====================================================================
@@ -1108,6 +1140,7 @@ function showDayPop(date, cx, cy) {
       ? rows.join('') + '<div class="dp-row" style="border-top:1px solid var(--line);margin-top:4px;padding-top:4px"><span>مجموع</span><b>' + fmtHours(total) + '</b></div>'
       : '<div class="dp-row">ثبتی در این روز نیست</div>');
   popEl.style.display = 'block';
+  popEl.dataset.day = date;
   const w = popEl.offsetWidth, ph = popEl.offsetHeight;
   let x = cx - w / 2, y = cy - ph - 12;
   if (y < 8) y = cy + 14;
@@ -1257,8 +1290,15 @@ function armButton(btn, armedLabel) {
 }
 
 document.addEventListener('click', e => {
-  const el = e.target.closest('[data-action]');
-  if (!el) return;
+  const hoverEl = e.target.closest ? e.target.closest('[data-hover-day]') : null;
+  if (hoverEl) {
+    const dd = hoverEl.getAttribute('data-hover-day');
+    if (popEl && popEl.style.display === 'block' && popEl.dataset.day === dd) hideDayPop();
+    else showDayPop(dd, e.clientX, e.clientY);
+    return;
+  }
+  const el = e.target.closest ? e.target.closest('[data-action]') : null;
+  if (!el) { hideDayPop(); return; }
   const a = el.dataset.action;
   const d = el.dataset;
 
@@ -1497,6 +1537,13 @@ document.addEventListener('mouseout', e => {
 });
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); hideDayPop(); } });
+
+let resizeTimer = null;
+if (window.addEventListener) window.addEventListener('resize', () => {
+  hideDayPop();
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(render, 160);
+});
 
 /* =====================================================================
    init
