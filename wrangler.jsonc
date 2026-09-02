@@ -1,9 +1,9 @@
 {
-  // Cloudflare Workers — assets-only deploy (no server code).
-  // Deploy: npx wrangler deploy   (after M1/Vite this directory becomes ./dist)
+  // Cloudflare Workers — static asset deploy.
+  // Build first: npm run build   (writes dist/), then: npx wrangler deploy
   "name": "mtracker",
   "compatibility_date": "2026-08-01",
   "assets": {
-    "directory": "./public"
+    "directory": "./dist"
   }
 }

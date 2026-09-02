@@ -1,0 +1,351 @@
+/* Layer 5 — delegated events. Wires the whole UI to Repo. */
+
+import { appSettings, fmtHours } from '../settings';
+import { todayIso, isoOf, isoToDate, addDays, monthStartOf, prevMonthStart, nextMonthStart } from '../jalali';
+import { state } from './state';
+import { toast } from './bits';
+import { Repo } from '../storage';
+import { hideDayPop, showDayPop } from './daypop';
+import { closeModal, openEntryModal, openTaskModal, openSettingsModal } from './modals';
+import { clampHours, toNumber } from '../utils';
+import { exportCsv, exportJson, importCsvRows, validateBackup } from '../transfer';
+import { render } from './render';
+
+function armButton(btn: HTMLElement, armedLabel: string): void {
+  btn.dataset.armed = '1';
+  btn.dataset.orig = btn.textContent || '';
+  btn.textContent = armedLabel;
+  btn.classList.add('danger');
+  setTimeout(() => {
+    if (!document.body.contains(btn)) return;
+    btn.dataset.armed = '0';
+    btn.classList.remove('danger');
+  }, 3500);
+}
+
+export function loadSample(repo: Repo): void {
+  const start = addDays(new Date(), -34);
+  const startIso = isoOf(start);
+  const t1 = repo.createTask({ name: 'زبان انگلیسی', targetDailyHours: 2, color: '#4f46e5' });
+  const t2 = repo.createTask({ name: 'برنامه‌نویسی', targetDailyHours: 3, color: '#0e9384' });
+  const t3 = repo.createTask({ name: 'ورزش', targetDailyHours: 1, color: '#175cd3' });
+  for (const t of [t1, t2, t3]) t.createdAt = new Date(start.getFullYear(), start.getMonth(), start.getDate(), 12).toISOString();
+  let seed = 42;
+  const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
+  const end = new Date();
+  for (let d = new Date(start); d <= end; d = addDays(d, 1)) {
+    const iso = isoOf(d);
+    if (rnd() > 0.12) repo.upsertEntry({ taskId: t1.id, date: iso, hours: clampHours(2 + (rnd() - 0.5) * 0.8) });
+    if (rnd() > 0.55) repo.upsertEntry({ taskId: t2.id, date: iso, hours: clampHours(4.5 + rnd() * 2.5) });
+    if (rnd() > 0.2) repo.upsertEntry({ taskId: t3.id, date: iso, hours: clampHours(0.9 + (rnd() - 0.5) * 0.3) });
+  }
+  repo.persist();
+  state.period.monthStart = null;
+  state.day = null;
+  toast('داده نمونه بارگذاری شد');
+  closeModal();
+  render(repo);
+}
+
+export function attachEvents(repo: Repo): void {
+  document.addEventListener('click', e => {
+    const t = e.target;
+    if (!(t instanceof Element)) return;
+
+    const hoverEl = t.closest('[data-hover-day]');
+    if (hoverEl) {
+      const dd = hoverEl.getAttribute('data-hover-day') || '';
+      const pop = document.getElementById('day-pop');
+      if (pop && pop.style.display === 'block' && pop.dataset.day === dd) hideDayPop();
+      else showDayPop(repo, dd, e.clientX, e.clientY);
+    }
+
+    const el = t.closest<HTMLElement>('[data-action]');
+    if (!el) { hideDayPop(); return; }
+    const a = el.dataset.action || '';
+    const d = el.dataset;
+
+    if (a === 'overlay-close') { if (e.target === el) closeModal(); return; }
+    if (a === 'close-modal') { closeModal(); return; }
+
+    switch (a) {
+      case 'tab':
+        state.tab = (d.tab || 'today') as typeof state.tab;
+        render(repo);
+        window.scrollTo({ top: 0 });
+        break;
+
+      case 'month-prev':
+        state.period.monthStart = isoOf(prevMonthStart(isoToDate(state.period.monthStart || isoOf(monthStartOf(new Date())))));
+        render(repo);
+        break;
+      case 'month-next':
+        state.period.monthStart = isoOf(nextMonthStart(isoToDate(state.period.monthStart || isoOf(monthStartOf(new Date())))));
+        render(repo);
+        break;
+
+      case 'set-period':
+        state.period.kind = (d.kind || 'month') as typeof state.period.kind;
+        if (d.kind === 'custom' && !state.period.from) {
+          state.period.from = isoOf(addDays(new Date(), -13));
+          state.period.to = todayIso();
+        }
+        render(repo);
+        break;
+      case 'set-rolling':
+        state.period.rollingDays = +d.days! || 30;
+        render(repo);
+        break;
+      case 'set-chart':
+        state.chartType = d.chart === 'line' ? 'line' : 'bar';
+        render(repo);
+        break;
+
+      case 'day-prev':
+        state.day = isoOf(addDays(isoToDate(state.day || todayIso()), -1));
+        render(repo);
+        break;
+      case 'day-next':
+        if ((state.day || todayIso()) >= todayIso()) break;
+        state.day = isoOf(addDays(isoToDate(state.day!), 1));
+        render(repo);
+        break;
+      case 'day-today':
+        state.day = todayIso();
+        render(repo);
+        break;
+
+      case 'toggle-theme': {
+        const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+        document.documentElement.dataset.theme = next;
+        try { localStorage.setItem('mtracker.theme', next); } catch { /* ignore */ }
+        const tb = document.getElementById('theme-btn');
+        if (tb) tb.textContent = next === 'dark' ? '☀' : '☾';
+        break;
+      }
+
+      case 'open-settings':
+        openSettingsModal(repo);
+        break;
+      case 'set-setting': {
+        const settings = repo.settings as Record<string, string>;
+        settings[d.key!] = d.value!;
+        repo.persist();
+        openSettingsModal(repo);
+        render(repo);
+        break;
+      }
+
+      case 'open-entry':
+        openEntryModal(repo, { taskId: d.task || null, date: d.date || null });
+        break;
+      case 'edit-day':
+        openEntryModal(repo, { taskId: d.task, date: d.date });
+        break;
+      case 'quick-add': {
+        const task = repo.task(d.task!);
+        if (!task) break;
+        const date = d.date || todayIso();
+        if (date > todayIso()) break;
+        const cur = repo.findEntry(task.id, date);
+        const next = clampHours((cur ? cur.hours : 0) + parseFloat(d.amount || '0'));
+        if (next <= 0) break;
+        repo.upsertEntry({ taskId: task.id, date, hours: next, note: cur ? cur.note : '' });
+        render(repo);
+        break;
+      }
+      case 'delete-entry': {
+        const entry = d.entry ? repo.entryById(d.entry) : undefined;
+        if (!entry) break;
+        repo.removeEntry(entry.id);
+        toast('ثبت حذف شد');
+        closeModal();
+        render(repo);
+        break;
+      }
+
+      case 'open-task':
+        openTaskModal(repo, d.task || null);
+        break;
+      case 'delete-task': {
+        const task = d.task ? repo.task(d.task) : undefined;
+        if (!task) break;
+        if (el.dataset.armed !== '1') { armButton(el, 'مطمئنی؟ حذف'); break; }
+        repo.removeTask(task.id);
+        toast('تسک «' + task.name + '» و همه ثبت‌هایش حذف شد');
+        render(repo);
+        break;
+      }
+
+      case 'export-csv': {
+        const { count } = exportCsv(repo);
+        toast(fmtHours(0, appSettings(repo.db)) === '۰:۰۰' ? faNumSafe(count) + ' ثبت خروجی گرفته شد' : faNumSafe(count) + ' ثبت خروجی گرفته شد');
+        break;
+      }
+      case 'export-json':
+        exportJson(repo);
+        toast('بکاپ کامل دانلود شد');
+        break;
+      case 'import-click': {
+        const input = document.getElementById('import-file');
+        if (input instanceof HTMLInputElement) input.click();
+        break;
+      }
+
+      case 'load-sample': {
+        if (repo.tasks.length > 0 && el.dataset.armed !== '1') { armButton(el, 'داده فعلی ترکیب می‌شود، ادامه؟'); break; }
+        loadSample(repo);
+        break;
+      }
+      case 'reset-all':
+        if (el.dataset.armed !== '1') { armButton(el, 'مطمئنی؟ همه پاک شود'); break; }
+        repo.reset();
+        state.period.monthStart = null;
+        state.day = null;
+        state.period.kind = 'month';
+        toast('همه داده‌ها پاک شد');
+        render(repo);
+        break;
+    }
+  });
+
+  function faNumSafe(n: number): string {
+    return new Intl.NumberFormat('fa-IR').format(n);
+  }
+
+  document.addEventListener('submit', e => {
+    const formEl = e.target;
+    if (!(formEl instanceof HTMLFormElement)) return;
+    if (!formEl.dataset.form) return;
+    e.preventDefault();
+
+    if (formEl.dataset.form === 'entry') {
+      const entryId = formEl.dataset.entryId || null;
+      const entry = entryId ? repo.entryById(entryId) : undefined;
+      const taskId = entry ? entry.taskId : (formEl.elements.namedItem('task') as HTMLSelectElement).value;
+      const date = (formEl.elements.namedItem('date') as HTMLInputElement).value;
+      const hours = toNumber((formEl.elements.namedItem('hours') as HTMLInputElement).value);
+      const note = (formEl.elements.namedItem('note') as HTMLInputElement).value.trim();
+      if (!date) { toast('تاریخ را انتخاب کن'); return; }
+      if (!(hours > 0 && hours <= 24)) { toast('ساعت باید بیشتر از صفر و حداکثر ۲۴ باشد'); return; }
+      const task = repo.task(taskId);
+      if (!task) { toast('تسک پیدا نشد'); return; }
+      const existing = repo.findEntry(taskId, date);
+      repo.upsertEntry({ taskId, date, hours: clampHours(hours), note });
+      toast(existing ? 'ثبت به‌روزرسانی شد' : 'ثبت شد');
+      closeModal();
+      render(repo);
+      return;
+    }
+
+    if (formEl.dataset.form === 'task') {
+      const id = formEl.dataset.taskId || null;
+      const name = (formEl.elements.namedItem('name') as HTMLInputElement).value.trim();
+      if (!name) { toast('نام تسک را بنویس'); return; }
+      const target = Math.max(0, Math.min(24, toNumber((formEl.elements.namedItem('target') as HTMLInputElement).value) || 0));
+      const customEl = formEl.querySelector<HTMLInputElement>('input[name="custom-color"]');
+      const checkedEl = formEl.querySelector<HTMLInputElement>('input[name="color"]:checked');
+      const color = (customEl && customEl.dataset.chosen === '1' && customEl.value)
+        ? customEl.value
+        : (checkedEl ? checkedEl.value : undefined);
+      if (id) {
+        repo.updateTask(id, { name, targetDailyHours: target, ...(color ? { color } : {}) });
+        toast('تسک به‌روزرسانی شد');
+      } else {
+        repo.createTask({ name, targetDailyHours: target, color });
+        toast('تسک «' + name + '» ساخته شد');
+      }
+      closeModal();
+      render(repo);
+    }
+  });
+
+  document.addEventListener('change', e => {
+    const t = e.target;
+    if (!(t instanceof HTMLInputElement)) return;
+    if (t.name === 'custom-color') {
+      t.dataset.chosen = '1';
+      const sw = t.closest('.swatch');
+      if (sw instanceof HTMLElement) sw.style.background = t.value;
+      const f = t.closest('form');
+      if (f) f.querySelectorAll<HTMLInputElement>('input[name="color"]').forEach(r => { r.checked = false; });
+      return;
+    }
+    if (t.name === 'color') {
+      const c = document.getElementById('f-custom-color');
+      if (c instanceof HTMLInputElement) {
+        c.dataset.chosen = '0';
+        const sw = c.closest('.swatch');
+        if (sw instanceof HTMLElement) sw.style.background = '';
+      }
+      return;
+    }
+    if (t.id === 'p-from' || t.id === 'p-to') {
+      state.period[t.id === 'p-from' ? 'from' : 'to'] = t.value || null;
+      render(repo);
+      return;
+    }
+    if (t.id === 'day-picker') {
+      if (t.value) state.day = t.value;
+      render(repo);
+      return;
+    }
+    if (t.id === 'import-file') {
+      const f = t.files && t.files[0];
+      if (!f) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const txt = String(reader.result || '');
+        if (f.name.toLowerCase().endsWith('.json')) {
+          const backup = validateBackup(txt);
+          if (!backup) { toast('فایل بکاپ معتبر نیست'); return; }
+          const fresh = new Repo(backup, msg => toast(msg));
+          repo.adopt(fresh.db);
+          toast('بازیابی شد: ' + new Intl.NumberFormat('fa-IR').format(repo.tasks.length) + ' تسک، ' + new Intl.NumberFormat('fa-IR').format(repo.entries.length) + ' ثبت');
+          closeModal();
+          render(repo);
+        } else {
+          const { added, created, skipped } = importCsvRows(repo, txt);
+          toast(new Intl.NumberFormat('fa-IR').format(added) + ' ثبت اضافه شد، ' + new Intl.NumberFormat('fa-IR').format(created) + ' تسک جدید، ' + new Intl.NumberFormat('fa-IR').format(skipped) + ' رد نامعتبر');
+          closeModal();
+          render(repo);
+        }
+      };
+      reader.readAsText(f, 'utf-8');
+      t.value = '';
+    }
+  });
+
+  document.addEventListener('input', e => {
+    const t = e.target;
+    if (t instanceof HTMLInputElement && t.id === 'f-hours') {
+      const hint = document.getElementById('f-hours-hint');
+      if (!hint) return;
+      const v = toNumber(t.value);
+      hint.textContent = (v > 0 && v <= 24) ? '= ' + fmtHours(v, appSettings(repo.db)) + ' ساعت' : '';
+    }
+  });
+
+  document.addEventListener('mouseover', e => {
+    const t = e.target;
+    if (t instanceof Element) {
+      const h = t.closest('[data-hover-day]');
+      if (h) showDayPop(repo, h.getAttribute('data-hover-day') || '', e.clientX, e.clientY);
+    }
+  });
+  document.addEventListener('mouseout', e => {
+    const t = e.target;
+    if (t instanceof Element && t.closest('[data-hover-day]')) hideDayPop();
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeModal(); hideDayPop(); }
+  });
+
+  let resizeTimer: ReturnType<typeof setTimeout> | null = null;
+  window.addEventListener('resize', () => {
+    hideDayPop();
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => render(repo), 160);
+  });
+}

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#4f46e5">
+<title>mTracker - سیستم استمرار (SD Method)</title>
+<link rel="icon" type="image/png" sizes="64x64" href="/icons/favicon-64.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;800&display=swap" rel="stylesheet">
+<script>
+(function(){try{
+var t = localStorage.getItem('mtracker.theme');
+if (t !== 'dark' && t !== 'light') t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+document.documentElement.dataset.theme = t;
+}catch(e){document.documentElement.dataset.theme='light';}});
+</script>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="logo">m</span>
+      <span>mTracker<small>سیستم استمرار (SD Method)</small></span>
+    </div>
+    <nav class="tabs" aria-label="بخش‌ها">
+      <button data-action="tab" data-tab="today" class="active">امروز</button>
+      <button data-action="tab" data-tab="daily">روزانه</button>
+      <button data-action="tab" data-tab="report">گزارش</button>
+      <button data-action="tab" data-tab="tasks">تسک‌ها</button>
+      <button data-action="tab" data-tab="data">داده‌ها</button>
+    </nav>
+    <button class="theme-btn" id="theme-btn" data-action="toggle-theme" title="تغییر پوسته روشن/تاریک">☾</button>
+    <button class="theme-btn" data-action="open-settings" title="تنظیمات">⚙</button>
+  </div>
+</header>
+<main class="wrap" id="app"></main>
+<div id="modal-root"></div>
+<input type="file" id="import-file" accept=".csv,.json,text/csv,application/json" hidden>
+<noscript><p style="text-align:center;padding:40px">این برنامه به جاوااسکریپت نیاز دارد.</p></noscript>
+<script type="module" src="/src/main.ts"></script>
+</body>
+</html>
