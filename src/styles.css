@@ -45,6 +45,9 @@ button{font-family:inherit}
 .topbar-inner{max-width:1080px;margin:0 auto;padding:10px 20px;display:flex;align-items:center;gap:16px}
 .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.02rem}
 .brand .logo{width:31px;height:31px;border-radius:9px;flex:none;display:block;object-fit:contain}
+.logo-dark{display:none}
+html[data-theme="dark"] .brand .logo{display:none}
+html[data-theme="dark"] .brand .logo-dark{display:block}
 .brand small{font-weight:500;font-size:.72rem;color:var(--muted);display:block;line-height:1.2}
 .tabs{display:flex;gap:3px;background:var(--surface2);border:1px solid var(--line);border-radius:999px;padding:4px;margin-inline-start:auto;overflow-x:auto;max-width:100%}
 .tabs button{border:0;background:transparent;font-size:.86rem;padding:6px 13px;border-radius:999px;cursor:pointer;color:var(--muted);font-weight:600;white-space:nowrap}

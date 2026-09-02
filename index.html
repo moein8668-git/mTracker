@@ -5,22 +5,24 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#4f46e5">
 <title>mTracker - سیستم استمرار (SD Method)</title>
-<link rel="icon" type="image/png" sizes="64x64" href="/icons/favicon-64.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
-<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link id="favicon-light" rel="icon" type="image/png" sizes="64x64" href="/icons/favicon-64.png">
+<link id="favicon-dark" rel="icon" type="image/png" sizes="64x64" href="/icons/favicon-dark-64.png" disabled>
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
 <script>
 (function(){try{
 var t = localStorage.getItem('mtracker.theme');
 if (t !== 'dark' && t !== 'light') t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
 document.documentElement.dataset.theme = t;
+var fl = document.getElementById('favicon-light'), fd = document.getElementById('favicon-dark');
+if (fl && fd) { fl.disabled = t === 'dark'; fd.disabled = t !== 'dark'; }
 }catch(e){document.documentElement.dataset.theme='light';}});
 </script>
 </head>
 <body>
 <header class="topbar">
-  <div class="topbar-inner">
     <div class="brand">
       <img class="logo" src="/icons/icon-192.png" alt="mTracker" width="31" height="31">
+      <img class="logo-dark" src="/icons/icon-dark-192.png" alt="" width="31" height="31" aria-hidden="true">
       <span>mTracker<small>سیستم استمرار (SD Method)</small></span>
     </div>
     <nav class="tabs" aria-label="بخش‌ها">

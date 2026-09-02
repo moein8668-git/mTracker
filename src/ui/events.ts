@@ -115,24 +115,21 @@ export function attachEvents(repo: Repo): void {
         render(repo);
         break;
 
-      case 'toggle-theme': {
-        const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-        document.documentElement.dataset.theme = next;
-        try { localStorage.setItem('mtracker.theme', next); } catch { /* ignore */ }
-        const tb = document.getElementById('theme-btn');
-        if (tb) tb.textContent = next === 'dark' ? '☀' : '☾';
-        break;
-      }
-
       case 'open-settings':
         openSettingsModal(repo);
         break;
-      case 'set-setting': {
-        const settings = repo.settings as Record<string, string>;
-        settings[d.key!] = d.value!;
-        repo.persist();
-        openSettingsModal(repo);
-        render(repo);
+      case 'toggle-theme': {
+        const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+        document.documentElement.dataset.theme = next;
+        const fl = document.getElementById('favicon-light');
+        const fd = document.getElementById('favicon-dark');
+        if (fl instanceof HTMLLinkElement && fd instanceof HTMLLinkElement) {
+          fl.disabled = next === 'dark';
+          fd.disabled = next !== 'dark';
+        }
+        try { localStorage.setItem('mtracker.theme', next); } catch { /* ignore */ }
+        const tb = document.getElementById('theme-btn');
+        if (tb) tb.textContent = next === 'dark' ? '☀' : '☾';
         break;
       }
 
