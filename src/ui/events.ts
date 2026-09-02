@@ -6,10 +6,11 @@ import { state } from './state';
 import { toast } from './bits';
 import { Repo } from '../storage';
 import { hideDayPop, showDayPop } from './daypop';
-import { closeModal, openEntryModal, openTaskModal, openSettingsModal } from './modals';
-import { clampHours, toNumber } from '../utils';
+import { closeModal, openEntryModal, openTaskModal, openSettingsModal, openPomodorusModal, updatePomodorusLink } from './modals';
 import { exportCsv, exportJson, importCsvRows, validateBackup } from '../transfer';
 import { render } from './render';
+import { clampHours, toNumber } from '../utils';
+import { importPomodorusProfile, normalizePomodorusProfile } from '../pomodorus';
 
 function armButton(btn: HTMLElement, armedLabel: string): void {
   btn.dataset.armed = '1';
@@ -117,6 +118,9 @@ export function attachEvents(repo: Repo): void {
 
       case 'open-settings':
         openSettingsModal(repo);
+        break;
+      case 'open-pomodorus':
+        openPomodorusModal();
         break;
       case 'toggle-theme': {
         const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
@@ -235,6 +239,34 @@ export function attachEvents(repo: Repo): void {
       return;
     }
 
+    if (formEl.dataset.form === 'pomodorus') {
+      const raw = (formEl.elements.namedItem('pomo-json') as HTMLTextAreaElement).value;
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(raw);
+      } catch {
+        toast('متن کپی‌شده JSON معتبر نیست؛ دوباره کل صفحه را کپی کن (Ctrl+A و Ctrl+C)');
+        return;
+      }
+      const profile = normalizePomodorusProfile(parsed);
+      if (!profile || !profile.days.length) {
+        toast('ساختار داده پومودوروس قابل خواندن نیست');
+        return;
+      }
+      const focusDays = profile.days.filter(d => d.totalMs > 0).length;
+      if (!focusDays) { toast('در این ۹۰ روز هیچ فوکوسی ثبت نشده'); return; }
+      const r = importPomodorusProfile(repo, profile);
+      toast(
+        new Intl.NumberFormat('fa-IR').format(r.entriesAdded) + ' ثبت اضافه شد، ' +
+        new Intl.NumberFormat('fa-IR').format(r.tasksCreated) + ' تسک جدید' +
+        (r.entriesSkippedExisting ? '، ' + new Intl.NumberFormat('fa-IR').format(r.entriesSkippedExisting) + ' روزِ قبلاً-ثبت‌شده دست نخورد' : '') +
+        ' (' + new Intl.NumberFormat('fa-IR').format(focusDays) + ' روز فوکوس)'
+      );
+      closeModal();
+      render(repo);
+      return;
+    }
+
     if (formEl.dataset.form === 'task') {
       const id = formEl.dataset.taskId || null;
       const name = (formEl.elements.namedItem('name') as HTMLInputElement).value.trim();
@@ -320,6 +352,10 @@ export function attachEvents(repo: Repo): void {
       if (!hint) return;
       const v = toNumber(t.value);
       hint.textContent = (v > 0 && v <= 24) ? '= ' + fmtHours(v, appSettings(repo.db)) + ' ساعت' : '';
+      return;
+    }
+    if (t instanceof HTMLInputElement && t.id === 'pomo-user') {
+      updatePomodorusLink();
     }
   });
 

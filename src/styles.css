@@ -173,6 +173,11 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:0;border
 /* ---------- toast ---------- */
 #toast{position:fixed;bottom:24px;right:50%;transform:translateX(50%) translateY(16px);background:var(--toast-bg);color:#fff;padding:10px 20px;border-radius:12px;font-size:.86rem;opacity:0;pointer-events:none;transition:.25s;z-index:80;max-width:90vw;text-align:center}
 #toast.show{opacity:1;transform:translateX(50%) translateY(0)}
+.modal textarea{font:inherit;padding:9px 12px;border:1px solid var(--line);border-radius:var(--radius-s);background:var(--surface);color:var(--ink);width:100%;resize:vertical;min-height:110px;font-size:.8rem;line-height:1.6}
+.modal textarea:focus{outline:2px solid var(--accent);outline-offset:0;border-color:var(--accent)}
+.pomo-guide{padding-inline-start:20px;font-size:.86rem;margin:0 0 14px}
+.pomo-guide li{margin-bottom:7px;line-height:1.9}
+.pomo-guide a{word-break:break-all;unicode-bidi:plaintext}
 
 /* ---------- segmented controls & period bar ---------- */
 .seg{display:flex;gap:3px;background:var(--surface2);border:1px solid var(--line);border-radius:999px;padding:3px}

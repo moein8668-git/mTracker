@@ -12,6 +12,11 @@ export function viewData(entriesCount: number): string {
     '<button class="btn" data-action="export-csv">خروجی CSV (برای Excel)</button>' +
     '<button class="btn" data-action="export-json">بکاپ کامل JSON</button>' +
     '</div></section>' +
+    '<section class="card"><h4>ورود از پومودوروس</h4>' +
+    '<p class="desc">ساعت‌های فوکوس‌ات را از اپ پومودوروس بیار این‌جا: لینک داده‌ات را باز می‌کنی، متن JSON را کپی می‌کنی و همین‌جا می‌چسبانی — بقیه‌اش خودکار است. راهنمای قدم‌به‌قدم داخلش هست.</p>' +
+    '<div class="btnrow">' +
+    '<button class="btn" data-action="open-pomodorus">ورود از پومودوروس (راهنما)</button>' +
+    '</div></section>' +
     '<section class="card"><h4>ورود داده</h4>' +
     '<p class="desc">CSV با ستون‌های date, task, hours, note (تاریخ میلادی به شکل 2026-08-31 یا 2026/08/31). تسکی که وجود نداشته باشد خودکار ساخته می‌شود. فایل JSON بکاپ کامل را بازگردانی می‌کند.</p>' +
     '<div class="btnrow">' +

@@ -103,3 +103,35 @@ export function openWelcomeModal(loadSample: () => void, openTask: () => void): 
     '</div></div>');
   void fmtHours; void loadSample; void openTask; /* handled via delegated actions */
 }
+
+export function openPomodorusModal(): void {
+  openModal('<form data-form="pomodorus">' +
+    '<h3>ورود از پومودوروس</h3>' +
+    '<ol class="pomo-guide">' +
+    '<li>نام کاربری‌ات در پومودوروس را بنویس (همان که با آن وارد اپ می‌شوی).</li>' +
+    '<li>روی لینکی که ساخته می‌شود بزن؛ صفحه‌ای پر از متن باز می‌شود.</li>' +
+    '<li>همهٔ متن آن صفحه را کپی کن: <b>Ctrl+A</b> بعد <b>Ctrl+C</b> (در موبایل: لمس طولانی → انتخاب همه → کپی).</li>' +
+    '<li>برگرد همین‌جا، متن را توی کادر پایین بچسبان (<b>Ctrl+V</b>) و «ورود» را بزن.</li>' +
+    '</ol>' +
+    '<label>نام کاربری پومودوروس<input type="text" id="pomo-user" maxlength="40" autocomplete="off" dir="ltr" placeholder="مثلا moein8668"></label>' +
+    '<div class="jalali-hint" id="pomo-link-hint"></div>' +
+    '<label>دادهٔ کپی‌شده (JSON)<textarea id="pomo-json" rows="7" dir="ltr" spellcheck="false" placeholder=\'{"handle":"…","days":[…]}\'></textarea></label>' +
+    '<p class="rule-hint">تسک‌ها با نام خودشان ساخته می‌شوند و ساعت هر روز ثبت می‌شود. روزهایی که خودت قبلاً دستی ثبت کرده‌ای دست‌نخورده می‌مانند. بعداً می‌توانی برای هر تسک، از بخش «تسک‌ها» هدف روزانه و رنگ تعیین کنی. ۹۰ روز آخر وارد می‌شود.</p>' +
+    '<div class="modal-actions">' +
+    '<button type="button" class="btn ghost" data-action="close-modal">انصراف</button>' +
+    '<button type="submit" class="btn primary">ورود داده</button>' +
+    '</div></form>');
+  const userInput = document.getElementById('pomo-user');
+  if (userInput instanceof HTMLInputElement) userInput.focus();
+}
+
+export function updatePomodorusLink(): void {
+  const hint = document.getElementById('pomo-link-hint');
+  const input = document.getElementById('pomo-user');
+  if (!hint || !(input instanceof HTMLInputElement)) return;
+  const name = input.value.trim();
+  if (!name) { hint.innerHTML = ''; return; }
+  if (!/^[A-Za-z0-9_.-]+$/.test(name)) { hint.innerHTML = '<span style="color:var(--warn)">نام کاربری فقط حروف و اعداد انگلیسی، نقطه، خط تیره.</span>'; return; }
+  const url = 'https://pomodorus.yazdan.me/api/profile/' + encodeURIComponent(name) + '?days=90';
+  hint.innerHTML = 'لینک داده‌ات: <a href="' + esc(url) + '" target="_blank" rel="noopener noreferrer" dir="ltr">' + esc(url) + '</a>';
+}
