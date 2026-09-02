@@ -5,13 +5,24 @@ import { analyze, EMPTY_RESULT } from './analytics';
 import { isoOf, isoToDate, addDays, todayIso, monthMeta, localDateOf } from './jalali';
 import type { Repo } from './storage';
 
-function periodStartFor(task: Task, monthStartIso: string): string {
-  const created = task.createdAt ? localDateOf(task.createdAt) : null;
-  return (created && created > monthStartIso) ? created : monthStartIso;
+/* A task's history may begin before its record was created (imports backfill
+   days), so the effective start is the earlier of createdAt / first entry. */
+export function taskEffectiveStart(repo: Repo, task: Task): string | null {
+  let start: string | null = task.createdAt ? localDateOf(task.createdAt) : null;
+  for (const e of repo.entriesForTask(task.id)) {
+    if (!start || e.date < start) start = e.date;
+  }
+  return start;
+}
+
+function periodStartFor(repo: Repo, task: Task, rangeStartIso: string): string {
+  const taskStart = taskEffectiveStart(repo, task);
+  if (!taskStart || taskStart <= rangeStartIso) return rangeStartIso;
+  return taskStart;
 }
 
 export function taskPeriodAnalysis(repo: Repo, task: Task, startIso: string, endIso: string): AnalyzeResult {
-  const s = periodStartFor(task, startIso);
+  const s = periodStartFor(repo, task, startIso);
   const e = endIso < todayIso() ? endIso : todayIso();
   if (s > e) return { ...EMPTY_RESULT, startIso: s, endIso: e };
   return {
@@ -22,7 +33,7 @@ export function taskPeriodAnalysis(repo: Repo, task: Task, startIso: string, end
 
 export function taskWeekAnalysis(repo: Repo, task: Task): AnalyzeResult | null {
   const endIso = todayIso();
-  const startIso = periodStartFor(task, isoOf(addDays(new Date(), -6)));
+  const startIso = periodStartFor(repo, task, isoOf(addDays(new Date(), -6)));
   if (startIso > endIso) return null;
   return analyze({ startIso, endIso, entries: repo.entriesForTask(task.id), target: task.targetDailyHours });
 }
@@ -30,13 +41,17 @@ export function taskWeekAnalysis(repo: Repo, task: Task): AnalyzeResult | null {
 export function overallPeriodAnalysis(repo: Repo, startIso: string, endIso: string): AnalyzeResult {
   const e = endIso < todayIso() ? endIso : todayIso();
   let s = startIso;
-  const created = repo.activeTasks()
-    .map(t => t.createdAt ? localDateOf(t.createdAt) : null)
-    .filter((x): x is string => Boolean(x));
-  if (created.length) {
-    const earliest = created.reduce((a, b) => (a < b ? a : b));
-    if (earliest > s) s = earliest;
+  /* overall window starts where the data starts: earliest entry across all
+     tasks (imports backfill), falling back to earliest task creation */
+  const entryStart = repo.entries.reduce<string | null>((min, e) => (!min || e.date < min ? e.date : min), null);
+  let earliest: string | null = entryStart;
+  if (!earliest) {
+    const created = repo.activeTasks()
+      .map(t => t.createdAt ? localDateOf(t.createdAt) : null)
+      .filter((x): x is string => Boolean(x));
+    earliest = created.length ? created.reduce((a, b) => (a < b ? a : b)) : null;
   }
+  if (earliest && earliest > s) s = earliest;
   if (s > e) return { ...EMPTY_RESULT };
   return analyze({ startIso: s, endIso: e, entries: repo.entries, target: 0 });
 }

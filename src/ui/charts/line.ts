@@ -1,9 +1,10 @@
 /* Line chart (hand-rolled SVG) + per-task/total series builders. */
 
-import { toJ, isoToDate, jDayLabel, jShortLabel, localDateOf } from '../../jalali';
+import { toJ, isoToDate, jDayLabel, jShortLabel } from '../../jalali';
 import { fmtHours, faNum, type AppSettings } from '../../settings';
 import type { DayPoint, Task } from '../../types';
 import type { Repo } from '../../storage';
+import { taskEffectiveStart } from '../../analysis';
 
 export interface LineSeries {
   name: string;
@@ -16,14 +17,9 @@ export interface LineSeries {
 export function seriesForTask(repo: Repo, task: Task, days: DayPoint[]): (number | null)[] {
   const byDate = new Map<string, number>();
   for (const e of repo.entriesForTask(task.id)) byDate.set(e.date, (byDate.get(e.date) || 0) + e.hours);
-  const created = task.createdAt ? localDateOf(task.createdAt) : null;
-  return days.map(d => (created && d.date < created) ? null : (byDate.get(d.date) || 0));
-}
-
-export function totalSeries(repo: Repo, days: DayPoint[]): number[] {
-  const byDate = new Map<string, number>();
-  for (const e of repo.entries) byDate.set(e.date, (byDate.get(e.date) || 0) + e.hours);
-  return days.map(d => byDate.get(d.date) || 0);
+  /* imported tasks have entries older than createdAt — cut at effective start */
+  const start = taskEffectiveStart(repo, task);
+  return days.map(d => (start && d.date < start) ? null : (byDate.get(d.date) || 0));
 }
 
 function legendHTML(items: { name: string; color: string }[]): string {
