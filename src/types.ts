@@ -17,6 +17,8 @@ export interface Entry {
   note: string;
   createdAt: string;
   updatedAt?: string;
+  /** true when this entry was created/last-updated by a Pomodorus import. */
+  pomo?: boolean;
 }
 
 export interface Settings {

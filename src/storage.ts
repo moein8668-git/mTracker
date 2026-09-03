@@ -95,6 +95,22 @@ export class Repo {
     return t;
   }
 
+  upsertEntry({ taskId, date, hours, note = '', pomo = false }: { taskId: string; date: string; hours: number; note?: string; pomo?: boolean }): Entry {
+    let e = this.findEntry(taskId, date);
+    if (e) {
+      e.hours = hours;
+      e.note = note;
+      e.updatedAt = new Date().toISOString();
+      if (pomo) e.pomo = true;
+    } else {
+      /* updatedAt set on create too — sync (roadmap phase 4) relies on it. */
+      e = { id: uid(), taskId, date, hours, note, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), ...(pomo ? { pomo: true } : {}) };
+      this.db.entries.push(e);
+    }
+    this.persist();
+    return e;
+  }
+
   updateTask(id: string, patch: Partial<Task>): Task | undefined {
     const t = this.task(id);
     if (t) Object.assign(t, patch);
@@ -115,21 +131,6 @@ export class Repo {
   }
 
   entryById(id: string): Entry | undefined { return this.db.entries.find(e => e.id === id); }
-
-  upsertEntry({ taskId, date, hours, note = '' }: { taskId: string; date: string; hours: number; note?: string }): Entry {
-    let e = this.findEntry(taskId, date);
-    if (e) {
-      e.hours = hours;
-      e.note = note;
-      e.updatedAt = new Date().toISOString();
-    } else {
-      /* updatedAt set on create too — sync (roadmap phase 4) relies on it. */
-      e = { id: uid(), taskId, date, hours, note, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
-      this.db.entries.push(e);
-    }
-    this.persist();
-    return e;
-  }
 
   removeEntry(id: string): void {
     this.db.entries = this.db.entries.filter(e => e.id !== id);

@@ -15,6 +15,7 @@ export interface PomodorusProfile { handle: string; days: PomodorusDay[]; }
 export interface PomoImportOutcome {
   tasksCreated: number;
   entriesAdded: number;
+  entriesUpdated: number;
   entriesSkippedExisting: number;
   daysWithFocus: number;
   totalHours: number;
@@ -31,8 +32,6 @@ export function normalizePomodorusProfile(data: unknown): PomodorusProfile | nul
   }
   return { handle: d.handle, days: d.days };
 }
-
-/* ---- proxy (worker) fetch path -------------------------------------- */
 
 /** Public shared proxy for all mTracker users. */
 export const DEFAULT_POMO_PROXY = 'https://ypoapi.moein8668.xyz';
@@ -63,7 +62,7 @@ const msToHours = (ms: number): number => Math.round((ms / MS_PER_HOUR) * 100) /
 export function importPomodorusProfile(repo: Repo, profile: PomodorusProfile): PomoImportOutcome {
   const taskCache = new Map<string, { id: string }>();
   const outcome: PomoImportOutcome = {
-    tasksCreated: 0, entriesAdded: 0, entriesSkippedExisting: 0, daysWithFocus: 0, totalHours: 0
+    tasksCreated: 0, entriesAdded: 0, entriesUpdated: 0, entriesSkippedExisting: 0, daysWithFocus: 0, totalHours: 0
   };
 
   for (const day of profile.days) {
@@ -105,9 +104,13 @@ function applyDay(
     taskCache.set(name, task);
   }
   const local = repo.findEntry(task.id, date);
-  if (local) { outcome.entriesSkippedExisting++; return false; }
-  repo.upsertEntry({ taskId: task.id, date, hours: clampHours(hours), note: '' });
-  outcome.entriesAdded++;
+  /* manual (non-pomo) entries are never touched */
+  if (local && !local.pomo) { outcome.entriesSkippedExisting++; return false; }
+  const changed = !local || Math.abs(local.hours - hours) > 0.004;
+  if (!changed) return false; /* fresh fetch, same data — nothing to do */
+  repo.upsertEntry({ taskId: task.id, date, hours: clampHours(hours), note: local?.note ?? '', pomo: true });
+  if (local) outcome.entriesUpdated++;
+  else outcome.entriesAdded++;
   outcome.totalHours += hours;
   return true;
 }

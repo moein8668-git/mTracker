@@ -71,13 +71,36 @@ describe('importPomodorusProfile', () => {
     expect(repo.entries.filter(e => e.date === '2026-08-25')).toHaveLength(0);
   });
 
-  it('is idempotent: re-import skips existing local entries', () => {
+  it('is idempotent: re-import with same data adds nothing', () => {
     importPomodorusProfile(repo, normalizePomodorusProfile(SAMPLE)!);
     const before = repo.entries.length;
     const r2 = importPomodorusProfile(repo, normalizePomodorusProfile(SAMPLE)!);
     expect(r2.entriesAdded).toBe(0);
-    expect(r2.entriesSkippedExisting).toBeGreaterThan(0);
+    expect(r2.entriesUpdated).toBe(0);
+    expect(r2.entriesSkippedExisting).toBe(0);
     expect(repo.entries.length).toBe(before);
+  });
+
+  it('re-import refreshes pomo-owned entries when upstream hours grow (0.5h → 1h)', () => {
+    importPomodorusProfile(repo, normalizePomodorusProfile(SAMPLE)!);
+    const p2 = normalizePomodorusProfile({
+      handle: 'moein8668',
+      days: [{ day: '2026-08-26', totalMs: 7200000, tasks: [{ name: 'وایب کد', totalMs: 7200000 }] }]
+    })!;
+    const r2 = importPomodorusProfile(repo, p2);
+    const vyb = repo.tasks.find(t => t.name === 'وایب کد')!;
+    expect(repo.findEntry(vyb.id, '2026-08-26')!.hours).toBe(2); // 0.5 → 2h
+    expect(r2.entriesUpdated).toBe(1);
+    expect(r2.entriesAdded).toBe(0);
+  });
+
+  it('re-import never touches manual entries even for same task+day', () => {
+    const t = repo.createTask({ name: 'وایب کد' });
+    repo.upsertEntry({ taskId: t.id, date: '2026-08-26', hours: 9 }); // manual log
+    const r = importPomodorusProfile(repo, normalizePomodorusProfile(SAMPLE)!);
+    expect(repo.findEntry(t.id, '2026-08-26')!.hours).toBe(9);
+    expect(r.entriesSkippedExisting).toBe(1);
+    expect(r.entriesUpdated).toBe(0);
   });
 
   it('never overwrites manually logged local data', () => {

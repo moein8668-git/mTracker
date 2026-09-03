@@ -111,7 +111,7 @@ export function openPomodorusModal(repo: Repo): void {
     '<div class="set-label">دریافت خودکار <span class="set-sub">— فقط نام کاربری؛ ۹۰ روز اخیر، داده‌ها تا ۱۵ دقیقه به‌روز</span></div>' +
     '<label>نام کاربری پومودوروس<input type="text" id="pomo-user-auto" maxlength="40" autocomplete="off" dir="ltr" placeholder="مثلا moein8668"></label>' +
     '<button type="button" class="btn primary" data-action="pomo-autofetch" style="width:100%">دریافت خودکار</button>' +
-    '<div class="jalali-hint" id="pomo-fetch-status"></div>' +
+    '<div class="pomo-status" id="pomo-fetch-status"></div>' +
     '</div>' +
     '<div class="rule-hint" style="margin:12px 0 8px;text-align:center">— یا روش دستی (بدون پراکسی) —</div>' +
     '<ol class="pomo-guide">' +

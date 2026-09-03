@@ -75,9 +75,10 @@ async function handlePomodorusAutoFetch(repo: Repo): Promise<void> {
     const profile = await fetchViaProxy(user);
     const r = importPomodorusProfile(repo, profile);
     set(
-      'انجام شد: ' + new Intl.NumberFormat('fa-IR').format(r.entriesAdded) + ' ثبت، ' +
-      new Intl.NumberFormat('fa-IR').format(r.tasksCreated) + ' تسک جدید' +
-      (r.entriesSkippedExisting ? '، ' + new Intl.NumberFormat('fa-IR').format(r.entriesSkippedExisting) + ' ثبت قبلی دست نخورد' : ''),
+      'انجام شد: ' + new Intl.NumberFormat('fa-IR').format(r.entriesAdded) + ' ثبت جدید' +
+      (r.entriesUpdated ? '، ' + new Intl.NumberFormat('fa-IR').format(r.entriesUpdated) + ' ثبت به‌روز شد' : '') +
+      (r.entriesSkippedExisting ? '، ' + new Intl.NumberFormat('fa-IR').format(r.entriesSkippedExisting) + ' ثبت دستی دست‌نخورده' : '') +
+      ' — ' + new Intl.NumberFormat('fa-IR').format(r.tasksCreated) + ' تسک جدید',
       'var(--ok)'
     );
     render(repo);
