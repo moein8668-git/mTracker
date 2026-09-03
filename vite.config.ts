@@ -3,6 +3,7 @@ import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  server: { port: 5189, host: true },
   plugins: [
     VitePWA({
       includeAssets: ['icons/favicon-64.png', 'icons/favicon-dark-64.png', 'icons/icon-192.png'],
@@ -12,8 +13,8 @@ export default defineConfig({
         description: 'سیستم مدیریت زمان پایدار (روش SD): ثبت ساعت روزانه، میانگین، انحراف معیار',
         lang: 'fa',
         dir: 'rtl',
-        theme_color: '#4f46e5',
-        background_color: '#f4f5f8',
+        theme_color: '#0E1114',
+        background_color: '#0E1114',
         display: 'standalone',
         start_url: '/',
         icons: [

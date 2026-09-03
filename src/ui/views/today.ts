@@ -2,10 +2,11 @@
 
 import type { Repo } from '../../storage';
 import { appSettings, fmtHours, FA_DATE_FULL, faNum } from '../../settings';
-import { todayIso, monthStartOf } from '../../jalali';
+import { todayIso, monthStartOf, monthMeta, isoOf, isoToDate, addDays } from '../../jalali';
 import { taskWeekAnalysis, overallMonthAnalysis } from '../../analysis';
 import { badge, statBox } from '../bits';
 import { esc } from '../../utils';
+import { wallHTML } from '../wall';
 
 export function viewToday(repo: Repo): string {
   const s = appSettings(repo.db);
@@ -30,6 +31,18 @@ export function viewToday(repo: Repo): string {
       '</section>';
   }
 
+  const meta = monthMeta(monthStartOf(new Date()));
+  const totals: Record<string, number> = {};
+  for (const e of repo.entries) totals[e.date] = (totals[e.date] || 0) + e.hours;
+  const wallDays: { date: string; hours: number }[] = [];
+  for (let d = isoToDate(meta.startIso); isoOf(d) <= tIso; d = addDays(d, 1)) {
+    const iso = isoOf(d);
+    wallDays.push({ date: iso, hours: totals[iso] || 0 });
+  }
+  html += '<section class="card wall-card"><div class="card-head"><h3>دیوار ماه</h3>' +
+    '<span class="mini-chip hit">نمای کل</span></div>' +
+    '<p class="rule-hint">هر خانه یک روز است؛ پررنگ‌تر یعنی ساعت بیشتر.</p>' +
+    wallHTML(wallDays, s, tIso) + '</section>';
   html += '<div class="task-grid">' + tasks.map(t => {
     const e = repo.findEntry(t.id, tIso);
     const wk = taskWeekAnalysis(repo, t);

@@ -11,7 +11,7 @@ import { state } from '../state';
 import { badge, VERDICT_NOTE, statBox } from '../bits';
 import { chartHTML } from '../charts/bars';
 import { lineChartHTML, seriesForTask, type LineSeries } from '../charts/line';
-
+import { wallHTML } from '../wall';
 function kindSeg(): string {
   const k = state.period.kind;
   const b = (id: string, label: string) => '<button data-action="set-period" data-kind="' + id + '"' + (k === id ? ' class="active"' : '') + '>' + label + '</button>';
@@ -72,6 +72,9 @@ export function viewReport(repo: Repo): string {
     ? lineChartHTML(ov.days, ovSeries, { mean: ov.mean, clickable: false }, s)
     : chartHTML(ov.days, { mean: ov.mean }, s);
   html += '<div class="stack">';
+  html += '<section class="card wall-card"><div class="card-head"><h3>دیوار ماه</h3><span class="mini-chip hit">نمای کل</span></div>' +
+    '<p class="rule-hint">پررنگ‌تر یعنی ساعت بیشتر؛ خانه امروز با قاب مشخص است.</p>' +
+    wallHTML(ov.days, s, todayIso()) + '</section>';
   html += '<section class="card"><div class="card-head"><h3>همه تسک‌ها</h3>' + badge(ov.status) + '</div>' +
     '<p class="rule-hint">' + VERDICT_NOTE[ov.status] + '</p>' +
     '<div class="stats">' +
