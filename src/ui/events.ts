@@ -10,7 +10,7 @@ import { closeModal, openEntryModal, openTaskModal, openSettingsModal, openPomod
 import { exportCsv, exportJson, importCsvRows, validateBackup } from '../transfer';
 import { render } from './render';
 import { clampHours, toNumber } from '../utils';
-import { DEFAULT_POMO_PROXY, fetchViaProxy, importPomodorusProfile, normalizePomodorusProfile, setProxyBase } from '../pomodorus';
+import { DEFAULT_POMO_PROXY, fetchViaProxy, importPomodorusProfile, normalizePomodorusProfile } from '../pomodorus';
 
 function armButton(btn: HTMLElement, armedLabel: string): void {
   btn.dataset.armed = '1';
@@ -49,7 +49,6 @@ export function loadSample(repo: Repo): void {
 }
 
 const POMO_ERRORS: Record<string, string> = {
-  no_proxy: 'اول آدرس ورکر پراکسی را وارد کن',
   invalid_username: 'نام کاربری برای پومودوروس معتبر نیست (فقط حروف و اعداد انگلیسی)',
   invalid_days: 'بازه باید ۳۰ یا ۶۰ یا ۹۰ روز باشد',
   rate_limited: 'تعداد درخواست‌ها زیاد بود؛ یک دقیقه بعد دوباره امتحان کن',
@@ -63,25 +62,17 @@ const POMO_ERRORS: Record<string, string> = {
 async function handlePomodorusAutoFetch(repo: Repo): Promise<void> {
   const status = document.getElementById('pomo-fetch-status');
   const userEl = document.getElementById('pomo-user-auto');
-  const daysEl = document.getElementById('pomo-days');
-  const proxyEl = document.getElementById('pomo-proxy');
   const btn = document.querySelector<HTMLButtonElement>('[data-action="pomo-autofetch"]');
   const set = (msg: string, color?: string) => {
     if (status) { status.textContent = msg; status.style.color = color || ''; }
   };
-  /* proxy field lives in the advanced section; blank → shared default */
-  const rawUrl = proxyEl instanceof HTMLInputElement ? proxyEl.value.trim() : '';
-  const url = rawUrl || DEFAULT_POMO_PROXY;
-  if (!setProxyBase(repo, url)) { set('آدرس سرور دریافت معتبر نیست', 'var(--bad)'); return; }
 
   const user = userEl instanceof HTMLInputElement ? userEl.value.trim() : '';
-  const days = Math.max(30, Math.min(90, Number(daysEl instanceof HTMLInputElement ? daysEl.value : 90) || 90));
-  if (!/^[A-Za-z0-9_.-]{1,40}$/.test(user)) { set('نام کاربری را درست وارد کن', 'var(--bad)'); return; }
-
+  if (!/^[A-Za-z0-9_.-]{1,40}$/.test(user)) { set('نام کاربری را درست وارد کن (فقط حروف و اعداد انگلیسی)', 'var(--bad)'); return; }
   if (btn) { btn.disabled = true; btn.textContent = 'در حال دریافت…'; }
-  set('در حال دریافت از پراکسی…');
+  set('در حال دریافت ۹۰ روز اخیر…');
   try {
-    const profile = await fetchViaProxy(repo, user, days as 30 | 60 | 90);
+    const profile = await fetchViaProxy(user);
     const r = importPomodorusProfile(repo, profile);
     set(
       'انجام شد: ' + new Intl.NumberFormat('fa-IR').format(r.entriesAdded) + ' ثبت، ' +

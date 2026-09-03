@@ -34,30 +34,12 @@ export function normalizePomodorusProfile(data: unknown): PomodorusProfile | nul
 
 /* ---- proxy (worker) fetch path -------------------------------------- */
 
-/** Public shared proxy (owner: mtracker user moein8668). Users can override
-    with their own worker in the advanced section. */
+/** Public shared proxy for all mTracker users. */
 export const DEFAULT_POMO_PROXY = 'https://ypoapi.moein8668.xyz';
-/** The user's deployed proxy worker (kept out of git — see .gitignore). */
-export function getProxyBase(repo: Repo): string | null {
-  const v = repo.settings.pomoProxyUrl;
-  const valid = typeof v === 'string' && /^https:\/\/[a-z0-9.-]+\/?$/i.test(v.trim());
-  return valid ? v.trim().replace(/\/+$/, '') : null;
-}
 
-export function setProxyBase(repo: Repo, url: string): boolean {
-  const trimmed = url.trim().replace(/\/+$/, '');
-  if (!/^https:\/\/[a-z0-9.-]+\/?$/i.test(trimmed)) return false;
-  repo.settings.pomoProxyUrl = trimmed;
-  repo.persist();
-  return true;
-}
-
-
-/** Error codes the worker returns — mapped to Persian messages in the UI. */
-export async function fetchViaProxy(repo: Repo, user: string, days: 30 | 60 | 90): Promise<PomodorusProfile> {
-  const base = getProxyBase(repo);
-  if (!base) throw new Error('no_proxy');
-  const res = await fetch(`${base}/?u=${encodeURIComponent(user)}&days=${days}`);
+/** Fetches a profile through the shared proxy. Always the last 90 days. */
+export async function fetchViaProxy(user: string): Promise<PomodorusProfile> {
+  const res = await fetch(`${DEFAULT_POMO_PROXY}/?u=${encodeURIComponent(user)}&days=90`);
   const body: unknown = await res.json().catch(() => null);
   if (!res.ok) {
     const code = (body && typeof body === 'object' && 'error' in body)
