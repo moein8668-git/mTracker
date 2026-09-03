@@ -1,6 +1,7 @@
 /* Modal layer — open/close, entry form, task form, settings. */
 
 import type { Repo } from '../storage';
+import { getProxyBase } from '../pomodorus';
 import { appSettings, FA_DATE_FULL, fmtHours } from '../settings';
 import { todayIso, isoToDate } from '../jalali';
 import { PALETTE, esc, toNumber } from '../utils';
@@ -104,9 +105,20 @@ export function openWelcomeModal(loadSample: () => void, openTask: () => void): 
   void fmtHours; void loadSample; void openTask; /* handled via delegated actions */
 }
 
-export function openPomodorusModal(): void {
+export function openPomodorusModal(repo: Repo): void {
+  const proxyBase = getProxyBase(repo);
   openModal('<form data-form="pomodorus">' +
     '<h3>ورود از پومودوروس</h3>' +
+    '<div class="pomo-auto">' +
+    '<div class="set-label">دریافت خودکار <span class="set-sub">— با ورکر پراکسی شخصی‌ات؛ آدرس یک بار ذخیره می‌شود</span></div>' +
+    '<label>آدرس ورکر پراکسی<input type="url" id="pomo-proxy" dir="ltr" placeholder="https://mtracker-pomo-proxy.yourname.workers.dev" value="' + esc(proxyBase || '') + '"></label>' +
+    '<div class="btnrow" style="align-items:center">' +
+    '<label style="margin:0">بازه (روز)<input type="number" id="pomo-days" min="30" max="90" step="30" value="90" style="width:100px"></label>' +
+    '<button type="button" class="btn primary" data-action="pomo-autofetch">دریافت خودکار</button>' +
+    '</div>' +
+    '<div class="jalali-hint" id="pomo-fetch-status"></div>' +
+    '</div>' +
+    '<div class="rule-hint" style="margin:12px 0 8px;text-align:center">— یا روش دستی (بدون پراکسی) —</div>' +
     '<ol class="pomo-guide">' +
     '<li>نام کاربری‌ات در پومودوروس را بنویس (همان که با آن وارد اپ می‌شوی).</li>' +
     '<li>روی لینکی که ساخته می‌شود بزن؛ صفحه‌ای پر از متن باز می‌شود.</li>' +

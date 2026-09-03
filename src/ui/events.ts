@@ -10,7 +10,7 @@ import { closeModal, openEntryModal, openTaskModal, openSettingsModal, openPomod
 import { exportCsv, exportJson, importCsvRows, validateBackup } from '../transfer';
 import { render } from './render';
 import { clampHours, toNumber } from '../utils';
-import { importPomodorusProfile, normalizePomodorusProfile } from '../pomodorus';
+import { fetchViaProxy, importPomodorusProfile, normalizePomodorusProfile, setProxyBase } from '../pomodorus';
 
 function armButton(btn: HTMLElement, armedLabel: string): void {
   btn.dataset.armed = '1';
@@ -48,6 +48,55 @@ export function loadSample(repo: Repo): void {
   render(repo);
 }
 
+const POMO_ERRORS: Record<string, string> = {
+  no_proxy: 'اول آدرس ورکر پراکسی را وارد کن',
+  invalid_username: 'نام کاربری برای پومودوروس معتبر نیست (فقط حروف و اعداد انگلیسی)',
+  invalid_days: 'بازه باید ۳۰ یا ۶۰ یا ۹۰ روز باشد',
+  rate_limited: 'تعداد درخواست‌ها زیاد بود؛ یک دقیقه بعد دوباره امتحان کن',
+  user_not_found: 'چنین نام کاربری در پومودوروس پیدا نشد',
+  upstream_error: 'سرور پومودوروس خطا برگرداند؛ بعداً امتحان کن',
+  upstream_unreachable: 'دسترسی به سرور پومودوروس ممکن نشد',
+  bad_shape: 'دادهٔ برگشتی قابل خواندن نبود',
+  failed: 'دریافت ناموفق بود؛ اتصال اینترنت و آدرس ورکر را چک کن'
+};
+
+async function handlePomodorusAutoFetch(repo: Repo): Promise<void> {
+  const status = document.getElementById('pomo-fetch-status');
+  const proxyEl = document.getElementById('pomo-proxy');
+  const userEl = document.getElementById('pomo-user');
+  const daysEl = document.getElementById('pomo-days');
+  const btn = document.querySelector<HTMLButtonElement>('[data-action="pomo-autofetch"]');
+  const set = (msg: string, color?: string) => {
+    if (status) { status.textContent = msg; status.style.color = color || ''; }
+  };
+
+  const url = proxyEl instanceof HTMLInputElement ? proxyEl.value : '';
+  if (!setProxyBase(repo, url)) { set('آدرس ورکر معتبر نیست؛ باید https://…workers.dev باشد', 'var(--bad)'); return; }
+
+  const user = userEl instanceof HTMLInputElement ? userEl.value.trim() : '';
+  const days = Math.max(30, Math.min(90, Number(daysEl instanceof HTMLInputElement ? daysEl.value : 90) || 90));
+  if (!/^[A-Za-z0-9_.-]{1,40}$/.test(user)) { set('نام کاربری را درست وارد کن', 'var(--bad)'); return; }
+
+  if (btn) { btn.disabled = true; btn.textContent = 'در حال دریافت…'; }
+  set('در حال دریافت از پراکسی…');
+  try {
+    const profile = await fetchViaProxy(repo, user, days as 30 | 60 | 90);
+    const r = importPomodorusProfile(repo, profile);
+    set(
+      'انجام شد: ' + new Intl.NumberFormat('fa-IR').format(r.entriesAdded) + ' ثبت، ' +
+      new Intl.NumberFormat('fa-IR').format(r.tasksCreated) + ' تسک جدید' +
+      (r.entriesSkippedExisting ? '، ' + new Intl.NumberFormat('fa-IR').format(r.entriesSkippedExisting) + ' ثبت قبلی دست نخورد' : ''),
+      'var(--ok)'
+    );
+    render(repo);
+  } catch (e) {
+    const code = e instanceof Error ? e.message : 'failed';
+    set(POMO_ERRORS[code] ?? POMO_ERRORS['failed'] ?? 'دریافت ناموفق بود', 'var(--bad)');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'دریافت خودکار'; }
+  }
+}
+
 export function attachEvents(repo: Repo): void {
   document.addEventListener('click', e => {
     const t = e.target;
@@ -75,6 +124,14 @@ export function attachEvents(repo: Repo): void {
         render(repo);
         window.scrollTo({ top: 0 });
         break;
+
+      case 'open-pomodorus':
+        openPomodorusModal(repo);
+        break;
+      case 'pomo-autofetch':
+        void handlePomodorusAutoFetch(repo);
+        break;
+
 
       case 'month-prev':
         state.period.monthStart = isoOf(prevMonthStart(isoToDate(state.period.monthStart || isoOf(monthStartOf(new Date())))));
@@ -118,9 +175,6 @@ export function attachEvents(repo: Repo): void {
 
       case 'open-settings':
         openSettingsModal(repo);
-        break;
-      case 'open-pomodorus':
-        openPomodorusModal();
         break;
       case 'toggle-theme': {
         const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';

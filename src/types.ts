@@ -22,6 +22,8 @@ export interface Entry {
 export interface Settings {
   chartDir?: 'ltr' | 'rtl';
   timeFormat?: 'hm' | 'decimal';
+  /** Base URL of the user's Pomodorus proxy worker (workers.dev only). */
+  pomoProxyUrl?: string;
 }
 
 export interface DBData {

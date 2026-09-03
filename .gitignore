@@ -4,3 +4,6 @@ dist/
 *.local
 .commandcode/
 __pycache__/
+
+# Pomodorus proxy worker (private, user-deployed) — never commit
+proxy-worker/

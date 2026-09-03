@@ -178,6 +178,8 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:0;border
 .pomo-guide{padding-inline-start:20px;font-size:.86rem;margin:0 0 14px}
 .pomo-guide li{margin-bottom:7px;line-height:1.9}
 .pomo-guide a{word-break:break-all;unicode-bidi:plaintext}
+.pomo-auto{background:var(--surface2);border:1px solid var(--line);border-radius:var(--radius-s);padding:12px 14px;margin-bottom:6px}
+.pomo-auto label{margin-bottom:10px}
 
 /* ---------- segmented controls & period bar ---------- */
 .seg{display:flex;gap:3px;background:var(--surface2);border:1px solid var(--line);border-radius:999px;padding:3px}
