@@ -10,7 +10,7 @@ import { closeModal, openEntryModal, openTaskModal, openSettingsModal, openPomod
 import { exportCsv, exportJson, importCsvRows, validateBackup } from '../transfer';
 import { render } from './render';
 import { clampHours, toNumber } from '../utils';
-import { fetchViaProxy, importPomodorusProfile, normalizePomodorusProfile, setProxyBase } from '../pomodorus';
+import { DEFAULT_POMO_PROXY, fetchViaProxy, importPomodorusProfile, normalizePomodorusProfile, setProxyBase } from '../pomodorus';
 
 function armButton(btn: HTMLElement, armedLabel: string): void {
   btn.dataset.armed = '1';
@@ -62,16 +62,17 @@ const POMO_ERRORS: Record<string, string> = {
 
 async function handlePomodorusAutoFetch(repo: Repo): Promise<void> {
   const status = document.getElementById('pomo-fetch-status');
-  const proxyEl = document.getElementById('pomo-proxy');
-  const userEl = document.getElementById('pomo-user');
+  const userEl = document.getElementById('pomo-user-auto');
   const daysEl = document.getElementById('pomo-days');
+  const proxyEl = document.getElementById('pomo-proxy');
   const btn = document.querySelector<HTMLButtonElement>('[data-action="pomo-autofetch"]');
   const set = (msg: string, color?: string) => {
     if (status) { status.textContent = msg; status.style.color = color || ''; }
   };
-
-  const url = proxyEl instanceof HTMLInputElement ? proxyEl.value : '';
-  if (!setProxyBase(repo, url)) { set('آدرس ورکر معتبر نیست؛ باید https://…workers.dev باشد', 'var(--bad)'); return; }
+  /* proxy field lives in the advanced section; blank → shared default */
+  const rawUrl = proxyEl instanceof HTMLInputElement ? proxyEl.value.trim() : '';
+  const url = rawUrl || DEFAULT_POMO_PROXY;
+  if (!setProxyBase(repo, url)) { set('آدرس سرور دریافت معتبر نیست', 'var(--bad)'); return; }
 
   const user = userEl instanceof HTMLInputElement ? userEl.value.trim() : '';
   const days = Math.max(30, Math.min(90, Number(daysEl instanceof HTMLInputElement ? daysEl.value : 90) || 90));

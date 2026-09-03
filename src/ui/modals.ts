@@ -1,7 +1,7 @@
 /* Modal layer — open/close, entry form, task form, settings. */
 
 import type { Repo } from '../storage';
-import { getProxyBase } from '../pomodorus';
+import { getProxyBase, DEFAULT_POMO_PROXY } from '../pomodorus';
 import { appSettings, FA_DATE_FULL, fmtHours } from '../settings';
 import { todayIso, isoToDate } from '../jalali';
 import { PALETTE, esc, toNumber } from '../utils';
@@ -108,15 +108,16 @@ export function openWelcomeModal(loadSample: () => void, openTask: () => void): 
 export function openPomodorusModal(repo: Repo): void {
   const proxyBase = getProxyBase(repo);
   openModal('<form data-form="pomodorus">' +
-    '<h3>ورود از پومودوروس</h3>' +
-    '<div class="pomo-auto">' +
-    '<div class="set-label">دریافت خودکار <span class="set-sub">— با ورکر پراکسی شخصی‌ات؛ آدرس یک بار ذخیره می‌شود</span></div>' +
-    '<label>آدرس ورکر پراکسی<input type="url" id="pomo-proxy" dir="ltr" placeholder="https://mtracker-pomo-proxy.yourname.workers.dev" value="' + esc(proxyBase || '') + '"></label>' +
+    '<div class="set-label">دریافت خودکار <span class="set-sub">— فقط نام کاربری؛ داده‌ها تا ۱۵ دقیقه به‌روز</span></div>' +
+    '<label>نام کاربری پومودوروس<input type="text" id="pomo-user-auto" maxlength="40" autocomplete="off" dir="ltr" placeholder="مثلا zet3u"></label>' +
     '<div class="btnrow" style="align-items:center">' +
     '<label style="margin:0">بازه (روز)<input type="number" id="pomo-days" min="30" max="90" step="30" value="90" style="width:100px"></label>' +
     '<button type="button" class="btn primary" data-action="pomo-autofetch">دریافت خودکار</button>' +
     '</div>' +
     '<div class="jalali-hint" id="pomo-fetch-status"></div>' +
+    '<details' + (proxyBase ? '' : ' open') + '><summary style="cursor:pointer;font-size:.78rem;color:var(--muted);margin-top:6px">تنظیم پیشرفته: آدرس سرور دریافت</summary>' +
+    '<label style="margin-top:8px">آدرس ورکر پراکسی<input type="url" id="pomo-proxy" dir="ltr" placeholder="https://ypoapi.moein8668.xyz" value="' + esc(proxyBase || DEFAULT_POMO_PROXY) + '"></label>' +
+    '</details>' +
     '</div>' +
     '<div class="rule-hint" style="margin:12px 0 8px;text-align:center">— یا روش دستی (بدون پراکسی) —</div>' +
     '<ol class="pomo-guide">' +

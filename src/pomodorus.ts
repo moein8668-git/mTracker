@@ -34,6 +34,9 @@ export function normalizePomodorusProfile(data: unknown): PomodorusProfile | nul
 
 /* ---- proxy (worker) fetch path -------------------------------------- */
 
+/** Public shared proxy (owner: mtracker user moein8668). Users can override
+    with their own worker in the advanced section. */
+export const DEFAULT_POMO_PROXY = 'https://ypoapi.moein8668.xyz';
 /** The user's deployed proxy worker (kept out of git — see .gitignore). */
 export function getProxyBase(repo: Repo): string | null {
   const v = repo.settings.pomoProxyUrl;
