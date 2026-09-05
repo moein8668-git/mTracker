@@ -2,12 +2,15 @@
 
 import './styles.css';
 import { Storage, Repo } from './storage';
-import { state } from './ui/state';
+import { state, parseTabId } from './ui/state';
 import { render } from './ui/render';
 import { attachEvents } from './ui/events';
 import { toast } from './ui/bits';
 
 const repo = new Repo(Storage.load(), msg => toast(msg));
+try {
+  state.tab = parseTabId(localStorage.getItem('mtracker.tab'));
+} catch { /* private mode: stay on today */ }
 attachEvents(repo);
 render(repo);
 

@@ -2,8 +2,8 @@
 
 import type { Repo } from '../storage';
 import { DEFAULT_POMO_PROXY } from '../pomodorus';
-import { appSettings, FA_DATE_FULL, fmtHours } from '../settings';
-import { todayIso, isoToDate } from '../jalali';
+import { FA_DATE_FULL, fmtHours } from '../settings';
+import { todayIso, isoToDate, WEEKDAY_PICK, ALL_DAYS, normalizeDays } from '../jalali';
 import { PALETTE, esc, toNumber } from '../utils';
 import { $ } from '../utils';
 
@@ -56,10 +56,14 @@ export function openTaskModal(repo: Repo, taskId: string | null = null): void {
   const isCustom = !!t && !PALETTE.includes(t.color);
   const used = new Set(repo.activeTasks().filter(x => !t || x.id !== t.id).map(x => x.color));
   const suggested = PALETTE.find(c => !used.has(c)) || PALETTE[0]!;
+  const checkedDays = t ? normalizeDays(t.days) : [...ALL_DAYS];
   openModal('<form data-form="task" data-task-id="' + (taskId || '') + '">' +
     '<h3>' + (t ? 'ویرایش تسک' : 'تسک جدید') + '</h3>' +
     '<label>نام تسک<input type="text" name="name" required maxlength="60" placeholder="مثلا: زبان انگلیسی" value="' + (t ? esc(t.name) : '') + '"></label>' +
     '<label>هدف روزانه به ساعت (اختیاری)<input type="number" name="target" step="any" min="0" max="24" placeholder="مثلا ۲" value="' + (t && t.targetDailyHours ? t.targetDailyHours : '') + '"></label>' +
+    '<div class="daypick-title">روزهای هفته</div><div class="daypick">' +
+    WEEKDAY_PICK.map(w => '<label class="daypick-chip"><input type="checkbox" name="days" value="' + w.day + '"' + (checkedDays.includes(w.day) ? ' checked' : '') + '><span>' + w.label + '</span></label>').join('') +
+    '</div>' +
     '<div class="swatches">' +
     PALETTE.map(c => '<label class="swatch" style="--c:' + c + '" title=""><input type="radio" name="color" value="' + c + '"' +
       ((t ? !isCustom && t.color === c : !isCustom && c === suggested) ? ' checked' : '') + '></label>').join('') +
@@ -74,20 +78,6 @@ export function openTaskModal(repo: Repo, taskId: string | null = null): void {
   if (nameInput instanceof HTMLInputElement) nameInput.focus();
 }
 
-export function openSettingsModal(repo: Repo): void {
-  const s = appSettings(repo.db);
-  const seg = (key: 'chartDir' | 'timeFormat', val: string, label: string) =>
-    '<button data-action="set-setting" data-key="' + key + '" data-value="' + val + '"' + (s[key] === val ? ' class="active"' : '') + '>' + label + '</button>';
-  openModal('<div>' +
-    '<h3>تنظیمات</h3>' +
-    '<div class="set-row"><div class="set-label">جهت نمودارها<div class="set-sub">شروع محور زمان در نمودارها (پیش‌فرض: چپ به راست)</div></div>' +
-    '<div class="seg">' + seg('chartDir', 'ltr', 'چپ به راست') + seg('chartDir', 'rtl', 'راست به چپ') + '</div></div>' +
-    '<div class="set-row"><div class="set-label">نمایش ساعت<div class="set-sub">شکل نمایش مقادیر ساعت (پیش‌فرض: ساعت:دقیقه)</div></div>' +
-    '<div class="seg">' + seg('timeFormat', 'hm', 'ساعت:دقیقه') + seg('timeFormat', 'decimal', 'اعشاری') + '</div></div>' +
-    '<p class="rule-hint">ورودی و خروجی CSV همیشه اعشاری می‌ماند تا با Excel و اپ‌های دیگر سازگار بماند.</p>' +
-    '<div class="modal-actions"><button class="btn ghost" data-action="close-modal">بستن</button></div>' +
-    '</div>');
-}
 
 export function openWelcomeModal(loadSample: () => void, openTask: () => void): void {
   openModal('<div class="welcome">' +

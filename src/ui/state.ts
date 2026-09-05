@@ -22,3 +22,7 @@ export const state = {
   chartType: 'bar' as 'bar' | 'line',
   day: null as string | null
 };
+export const TABS: readonly TabId[] = ['today', 'daily', 'report', 'tasks', 'data'];
+export function parseTabId(v: string | null): TabId {
+  return TABS.includes(v as TabId) ? (v as TabId) : 'today';
+}

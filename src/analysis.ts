@@ -2,7 +2,8 @@
 
 import type { AnalyzeResult, Task } from './types';
 import { analyze, EMPTY_RESULT } from './analytics';
-import { isoOf, isoToDate, addDays, todayIso, monthMeta, localDateOf } from './jalali';
+import { isoOf, isoToDate, addDays, todayIso, monthMeta, localDateOf, isScheduledDay, normalizeDays } from './jalali';
+import { faNum } from './settings';
 import type { Repo } from './storage';
 
 /* A task's history may begin before its record was created (imports backfill
@@ -20,13 +21,25 @@ function periodStartFor(repo: Repo, task: Task, rangeStartIso: string): string {
   if (!taskStart || taskStart <= rangeStartIso) return rangeStartIso;
   return taskStart;
 }
+export function isDaily(task: Task): boolean {
+  return normalizeDays(task.days).length === 7;
+}
+function includeScheduled(task: Task): (iso: string) => boolean {
+  const sched = normalizeDays(task.days);
+  return (iso: string) => isScheduledDay(sched, iso);
+}
+/** Short schedule label for task rows, e.g. «هر روز» or «۳ روز در هفته». */
+export function scheduleSummary(task: Task): string {
+  const n = normalizeDays(task.days).length;
+  return n >= 7 ? 'هر روز' : faNum(n) + ' روز در هفته';
+}
 
 export function taskPeriodAnalysis(repo: Repo, task: Task, startIso: string, endIso: string): AnalyzeResult {
   const s = periodStartFor(repo, task, startIso);
   const e = endIso < todayIso() ? endIso : todayIso();
   if (s > e) return { ...EMPTY_RESULT, startIso: s, endIso: e };
   return {
-    ...analyze({ startIso: s, endIso: e, entries: repo.entriesForTask(task.id), target: task.targetDailyHours }),
+    ...analyze({ startIso: s, endIso: e, entries: repo.entriesForTask(task.id), target: task.targetDailyHours, includeDay: includeScheduled(task) }),
     startIso: s, endIso: e
   };
 }
@@ -35,7 +48,7 @@ export function taskWeekAnalysis(repo: Repo, task: Task): AnalyzeResult | null {
   const endIso = todayIso();
   const startIso = periodStartFor(repo, task, isoOf(addDays(new Date(), -6)));
   if (startIso > endIso) return null;
-  return analyze({ startIso, endIso, entries: repo.entriesForTask(task.id), target: task.targetDailyHours });
+  return analyze({ startIso, endIso, entries: repo.entriesForTask(task.id), target: task.targetDailyHours, includeDay: includeScheduled(task) });
 }
 
 export function overallPeriodAnalysis(repo: Repo, startIso: string, endIso: string): AnalyzeResult {
@@ -62,9 +75,18 @@ export function overallMonthAnalysis(repo: Repo, ms: Date): AnalyzeResult {
 }
 
 export function streakOf(repo: Repo, taskId: string, endDateIso: string): number {
+  const t = repo.task(taskId);
+  const sched = normalizeDays(t?.days);
   const set = new Set(repo.entriesForTask(taskId).filter(e => e.hours > 0).map(e => e.date));
   let s = 0, d = isoToDate(endDateIso), guard = 0;
-  while (set.has(isoOf(d)) && guard++ < 3650) { s++; d = addDays(d, -1); }
+  /* Off-schedule days neither extend nor break the streak. */
+  while (guard++ < 3650) {
+    const iso = isoOf(d);
+    d = addDays(d, -1);
+    if (!isScheduledDay(sched, iso)) continue;
+    if (!set.has(iso)) break;
+    s++;
+  }
   return s;
 }
 

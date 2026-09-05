@@ -3,8 +3,9 @@
 import type { DBData, Entry, Task } from './types';
 import { uid } from './utils';
 import { PALETTE } from './utils';
+import { normalizeDays } from './jalali';
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 export const DB_KEY = 'mtracker.db.v1';
 
 /**
@@ -14,10 +15,22 @@ export const DB_KEY = 'mtracker.db.v1';
 export function migrate(db: unknown): DBData | null {
   if (!db || typeof db !== 'object') return null;
   const d = db as Partial<DBData>;
+  if (d.schemaVersion === 1) {
+    /* v1 → v2: every task gains a weekday schedule; v1 tasks ran daily. */
+    repairTaskDays(d.tasks);
+    d.schemaVersion = 2;
+  }
   if (d.schemaVersion !== SCHEMA_VERSION) return null; /* future upgrades branch here */
   if (!Array.isArray(d.tasks) || !Array.isArray(d.entries)) return null;
   if (!d.settings || typeof d.settings !== 'object') d.settings = {};
+  repairTaskDays(d.tasks);
   return d as DBData;
+}
+
+/** Fill missing/invalid weekday schedules (v1 tasks, hand-edited backups). */
+function repairTaskDays(tasks: unknown): void {
+  if (!Array.isArray(tasks)) return;
+  for (const t of tasks as Partial<Task>[]) t.days = normalizeDays(t.days);
 }
 
 function emptyDb(): DBData {
@@ -81,12 +94,13 @@ export class Repo {
 
   task(id: string): Task | undefined { return this.db.tasks.find(t => t.id === id); }
 
-  createTask({ name, targetDailyHours = 0, color }: { name: string; targetDailyHours?: number; color?: string }): Task {
+  createTask({ name, targetDailyHours = 0, color, days }: { name: string; targetDailyHours?: number; color?: string; days?: number[] }): Task {
     const t: Task = {
       id: uid(),
       name: String(name).trim(),
       targetDailyHours: +targetDailyHours || 0,
       color: color || PALETTE[this.db.tasks.length % PALETTE.length]!,
+      days: normalizeDays(days),
       createdAt: new Date().toISOString(),
       archivedAt: null
     };

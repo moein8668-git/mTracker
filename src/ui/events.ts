@@ -1,12 +1,12 @@
 /* Layer 5 — delegated events. Wires the whole UI to Repo. */
 
 import { appSettings, fmtHours } from '../settings';
-import { todayIso, isoOf, isoToDate, addDays, monthStartOf, prevMonthStart, nextMonthStart } from '../jalali';
+import { todayIso, isoOf, isoToDate, addDays, monthStartOf, prevMonthStart, nextMonthStart, normalizeDays } from '../jalali';
 import { state } from './state';
 import { toast } from './bits';
 import { Repo } from '../storage';
 import { hideDayPop, showDayPop } from './daypop';
-import { closeModal, openEntryModal, openTaskModal, openSettingsModal, openPomodorusModal, updatePomodorusLink } from './modals';
+import { closeModal, openEntryModal, openTaskModal, openPomodorusModal, updatePomodorusLink } from './modals';
 import { exportCsv, exportJson, importCsvRows, validateBackup } from '../transfer';
 import { render } from './render';
 import { clampHours, toNumber } from '../utils';
@@ -114,6 +114,7 @@ export function attachEvents(repo: Repo): void {
     switch (a) {
       case 'tab':
         state.tab = (d.tab || 'today') as typeof state.tab;
+        try { localStorage.setItem('mtracker.tab', state.tab); } catch { /* ignore */ }
         render(repo);
         window.scrollTo({ top: 0 });
         break;
@@ -166,23 +167,6 @@ export function attachEvents(repo: Repo): void {
         render(repo);
         break;
 
-      case 'open-settings':
-        openSettingsModal(repo);
-        break;
-      case 'toggle-theme': {
-        const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-        document.documentElement.dataset.theme = next;
-        const fl = document.getElementById('favicon-light');
-        const fd = document.getElementById('favicon-dark');
-        if (fl instanceof HTMLLinkElement && fd instanceof HTMLLinkElement) {
-          fl.disabled = next === 'dark';
-          fd.disabled = next !== 'dark';
-        }
-        try { localStorage.setItem('mtracker.theme', next); } catch { /* ignore */ }
-        const tb = document.getElementById('theme-btn');
-        if (tb) tb.textContent = next === 'dark' ? '☀' : '☾';
-        break;
-      }
 
       case 'open-entry':
         openEntryModal(repo, { taskId: d.task || null, date: d.date || null });
@@ -324,11 +308,12 @@ export function attachEvents(repo: Repo): void {
       const color = (customEl && customEl.dataset.chosen === '1' && customEl.value)
         ? customEl.value
         : (checkedEl ? checkedEl.value : undefined);
+      const days = normalizeDays([...formEl.querySelectorAll<HTMLInputElement>('input[name="days"]:checked')].map(c => +c.value));
       if (id) {
-        repo.updateTask(id, { name, targetDailyHours: target, ...(color ? { color } : {}) });
+        repo.updateTask(id, { name, targetDailyHours: target, ...(color ? { color } : {}), days });
         toast('تسک به‌روزرسانی شد');
       } else {
-        repo.createTask({ name, targetDailyHours: target, color });
+        repo.createTask({ name, targetDailyHours: target, color, days });
         toast('تسک «' + name + '» ساخته شد');
       }
       closeModal();

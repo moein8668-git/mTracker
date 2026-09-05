@@ -5,6 +5,8 @@ export interface Task {
   name: string;
   targetDailyHours: number;
   color: string;
+  /** Scheduled weekdays (getDay(): 0=Sun..6=Sat). Missing = every day. */
+  days: number[];
   createdAt: string;
   archivedAt: string | null;
 }

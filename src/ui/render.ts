@@ -20,7 +20,5 @@ export function render(repo: Repo): void {
   const app = document.getElementById('app');
   if (app) app.innerHTML = VIEWS[state.tab](repo);
   document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('active', (b as HTMLElement).dataset.tab === state.tab));
-  const tb = document.getElementById('theme-btn');
-  if (tb) tb.textContent = document.documentElement.dataset.theme === 'dark' ? '☀' : '☾';
   hideDayPop();
 }

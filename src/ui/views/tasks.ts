@@ -3,6 +3,7 @@
 import type { Repo } from '../../storage';
 import { appSettings, fmtHours, FA_DATE_FULL, faNum } from '../../settings';
 import { isoToDate, localDateOf } from '../../jalali';
+import { scheduleSummary } from '../../analysis';
 import { esc } from '../../utils';
 
 export function viewTasks(repo: Repo): string {
@@ -23,6 +24,7 @@ export function viewTasks(repo: Repo): string {
       '<div><div class="t-name">' + esc(t.name) + '</div>' +
       '<div class="t-meta">' +
       (t.targetDailyHours > 0 ? 'هدف روزانه: ' + fmtHours(t.targetDailyHours, s) + ' ساعت' : 'بدون هدف') +
+      ' | ' + scheduleSummary(t) +
       ' | ' + faNum(cnt) + ' ثبت | ساخت: ' + FA_DATE_FULL.format(isoToDate(localDateOf(t.createdAt))) +
       '</div></div>' +
       '<div class="t-actions">' +

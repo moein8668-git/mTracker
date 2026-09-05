@@ -9,11 +9,13 @@ export const EMPTY_RESULT: AnalyzeResult = { status: 'empty', days: [], n: 0, to
 /** Max days in one analyze window — 500 covers any Jalali year + margin. */
 export const MAX_RANGE_DAYS = 500;
 
-export function analyze({ startIso, endIso, entries, target = 0 }: {
+export function analyze({ startIso, endIso, entries, target = 0, includeDay }: {
   startIso: string;
   endIso: string;
   entries: { date: string; hours: number }[];
   target?: number;
+  /** Off-schedule days are excluded from the population (not counted as zero). */
+  includeDay?: (iso: string) => boolean;
 }): AnalyzeResult {
   const byDate = new Map<string, number>();
   for (const e of entries) byDate.set(e.date, (byDate.get(e.date) || 0) + e.hours);
@@ -24,8 +26,9 @@ export function analyze({ startIso, endIso, entries, target = 0 }: {
   while (d <= end) {
     if (guard++ > MAX_RANGE_DAYS) throw new Error('analyze: range longer than ' + MAX_RANGE_DAYS + ' days');
     const iso = isoOf(d);
-    days.push({ date: iso, hours: byDate.get(iso) || 0 });
     d = addDays(d, 1);
+    if (includeDay && !includeDay(iso)) continue;
+    days.push({ date: iso, hours: byDate.get(iso) || 0 });
   }
   const n = days.length;
   if (!n) return { ...EMPTY_RESULT };

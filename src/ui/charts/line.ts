@@ -29,6 +29,13 @@ function legendHTML(items: { name: string; color: string }[]): string {
 
 import { esc } from '../../utils';
 
+function linesLegend(mean: number, target: number, s: AppSettings): string {
+  if (!(mean > 0 || target > 0)) return '';
+  return '<div class="legend">' +
+    (mean > 0 ? '<span class="lg-mean"><i></i>میانگین ' + fmtHours(mean, s) + '</span>' : '') +
+    (target > 0 ? '<span class="lg-target"><i></i>هدف ' + fmtHours(target, s) + '</span>' : '') +
+    '</div>';
+}
 export function lineChartHTML(days: DayPoint[], series: LineSeries[], opts: {
   mean?: number; target?: number; clickable?: boolean; h?: number; hoverDay?: boolean;
 }, s: AppSettings): string {
@@ -38,14 +45,14 @@ export function lineChartHTML(days: DayPoint[], series: LineSeries[], opts: {
   const rtl = s.chartDir === 'rtl';
   const mobile = typeof window !== 'undefined' && window.innerWidth && window.innerWidth < 640;
   const W = mobile ? 360 : 700;
-  const padR = rtl ? 64 : 14, padL = rtl ? 14 : 64, padT = 14, padB = 26;
+  const padR = rtl ? 44 : 10, padL = rtl ? 10 : 44, padT = 14, padB = 26;
   const H = Math.max(h, 90);
   const plotW = W - padR - padL, plotH = H - padT - padB;
   let maxV = target || 0;
   for (const ser of series) for (const v of ser.values) if (v != null && v > maxV) maxV = v;
   if (mean > maxV) maxV = mean;
   maxV = Math.max(maxV, 1) * 1.15;
-  const insetX = 14;
+  const insetX = 10;
   const step = n === 1 ? (plotW - 2 * insetX) / 2 : (plotW - 2 * insetX) / (n - 1);
   const X = (i: number) => rtl ? W - padR - insetX - i * step : padL + insetX + i * step;
   const Y = (v: number) => padT + (1 - v / maxV) * plotH;
@@ -58,7 +65,7 @@ export function lineChartHTML(days: DayPoint[], series: LineSeries[], opts: {
     grid += '<line class="lc-grid" x1="' + padL + '" y1="' + Y(v).toFixed(1) + '" x2="' + (W - padR) + '" y2="' + Y(v).toFixed(1) + '"/>' +
       '<text x="' + yLabX + '" y="' + (Y(v) + 3.5).toFixed(1) + '" text-anchor="' + yLabAnchor + '">' + fmtHours(v, s) + '</text>';
   }
-  const tickEvery = n > 45 ? 14 : n > 20 ? 7 : 5;
+  const tickEvery = n > 45 ? 7 : n > 20 ? 4 : 2;
   let ticks = '';
   for (let i = 0; i < n; i++) {
     const j = toJ(isoToDate(days[i]!.date));
@@ -107,7 +114,7 @@ export function lineChartHTML(days: DayPoint[], series: LineSeries[], opts: {
   if (mean > 0) lines += '<line class="lc-mean" x1="' + padL + '" y1="' + Y(mean).toFixed(1) + '" x2="' + (W - padR) + '" y2="' + Y(mean).toFixed(1) + '"><title>میانگین: ' + fmtHours(mean, s) + ' ساعت</title></line>';
   if (target > 0) lines += '<line class="lc-target" x1="' + padL + '" y1="' + Y(target).toFixed(1) + '" x2="' + (W - padR) + '" y2="' + Y(target).toFixed(1) + '"><title>هدف روزانه: ' + fmtHours(target, s) + ' ساعت</title></line>';
   return '<svg class="linechart" viewBox="0 0 ' + W + ' ' + H + '" role="img">' + grid + lines + paths + ticks + dots + '</svg>' +
-    legendHTML(series.map(sr => ({ name: sr.name, color: sr.color }))) + axisCaption();
+    legendHTML(series.map(sr => ({ name: sr.name, color: sr.color }))) + linesLegend(mean, target, s) + axisCaption();
 }
 
 import { axisCaption } from './bars';

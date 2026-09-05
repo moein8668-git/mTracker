@@ -2,9 +2,7 @@
 
 /* mTracker / theme-wall — "Your month on one wall". Dark slate-teal, matte, flat. */
 
-:root,
-html[data-theme="light"],
-html[data-theme="dark"] {
+:root {
   --bg: #0e1114;
   --surface: #151a1f;
   --surface2: #1c232a;
@@ -55,12 +53,8 @@ button { font-family: inherit; }
   max-width: 1080px; margin: 0 auto; padding: 8px 20px;
   display: flex; align-items: center; gap: 16px;
 }
-.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: .95rem; }
-.brand::before {
-  content: ''; width: 11px; height: 11px; flex: none;
-  background: var(--accent); border-radius: 2px;
-}
-.brand .logo, .brand .logo-dark { display: none; }
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:.95rem}
+.brand .logo{width:28px;height:28px;flex:none;border-radius:7px;display:block}
 .brand small { font-weight: 400; font-size: .7rem; color: var(--muted); display: block; line-height: 1.4; }
 .tabs {
   display: flex; gap: 2px; margin-inline-start: auto;
@@ -305,13 +299,6 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0;
 .mini-chip.under { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
 .mini-chip.none { background: transparent; color: var(--muted); }
 
-/* ---------- theme button ---------- */
-.theme-btn {
-  width: 34px; height: 34px; border-radius: var(--radius-s);
-  border: 1px solid var(--line); background: transparent; cursor: pointer;
-  font-size: .95rem; display: grid; place-items: center; color: var(--muted); flex: none; padding: 0;
-}
-.theme-btn:hover { color: var(--ink); border-color: var(--muted); }
 .linechart, .bars { user-select: none; -webkit-user-select: none; }
 .linechart { touch-action: manipulation; }
 .btn, .tabs button, .seg button, .bar-col.clickable { touch-action: manipulation; }
@@ -350,3 +337,10 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0;
   .grid2 { grid-template-columns: 1fr; }
   .hero-date { font-size: 1.1rem; }
 }
+.daypick-title{font-size:.84rem;font-weight:600;margin:2px 0 8px}
+.daypick{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.daypick-chip{position:relative;display:flex;flex-direction:row;margin:0;cursor:pointer;font-size:.78rem;font-weight:600}
+.daypick-chip input{position:absolute;opacity:0;width:0;height:0;margin:0}
+.daypick-chip span{padding:5px 12px;border:1px solid var(--line);border-radius:var(--radius-s);color:var(--muted)}
+.daypick-chip input:checked + span{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
+.daypick-chip input:focus-visible + span{outline:2px solid var(--accent);outline-offset:1px}

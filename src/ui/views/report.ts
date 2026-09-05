@@ -3,7 +3,7 @@
 import type { Repo } from '../../storage';
 import { appSettings, fmtHours, faNum } from '../../settings';
 import { monthStartOf, isoOf, addDays, todayIso } from '../../jalali';
-import { taskPeriodAnalysis, overallPeriodAnalysis } from '../../analysis';
+import { taskPeriodAnalysis, overallPeriodAnalysis, isDaily, scheduleSummary } from '../../analysis';
 import { resolvePeriod, type ResolvedPeriod } from '../../period';
 import type { AnalyzeResult } from '../../types';
 import { esc } from '../../utils';
@@ -107,6 +107,7 @@ export function viewReport(repo: Repo): string {
       '</div>' + chart +
       '<p class="rule-hint">قانون پایداری: انحراف معیار باید <b class="' + (a.status === 'ok' ? 'c-ok' : a.status === 'volatile' ? 'c-warn' : 'c-muted') + '">کمتر از ' + fmtHours(a.sdLimit, s) + ' ساعت</b> باشد.' +
       (state.chartType === 'line' ? ' روی نقاط خط کلیک کن تا ثبت همان روز را ویرایش کنی.' : ' روی میله‌ها کلیک کن تا ثبت همان روز را ویرایش کنی.') + '</p>' +
+      (isDaily(t) ? '' : '<p class="rule-hint">میانگین و انحراف معیار فقط روی روزهای برنامه (' + scheduleSummary(t) + ') حساب شده است.</p>') +
       '</section>';
   }
   html += '</div>';
