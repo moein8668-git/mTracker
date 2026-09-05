@@ -3,8 +3,8 @@
 import type { Repo } from '../storage';
 import { DEFAULT_POMO_PROXY } from '../pomodorus';
 import { FA_DATE_FULL, fmtHours } from '../settings';
-import { todayIso, isoToDate, WEEKDAY_PICK, ALL_DAYS, normalizeDays } from '../jalali';
-import { PALETTE, esc, toNumber } from '../utils';
+import { todayIso, isoToDate } from '../jalali';
+import { PALETTE, esc, toNumber, normalizeDaysPerWeek } from '../utils';
 import { $ } from '../utils';
 
 export function openModal(html: string): void {
@@ -56,14 +56,13 @@ export function openTaskModal(repo: Repo, taskId: string | null = null): void {
   const isCustom = !!t && !PALETTE.includes(t.color);
   const used = new Set(repo.activeTasks().filter(x => !t || x.id !== t.id).map(x => x.color));
   const suggested = PALETTE.find(c => !used.has(c)) || PALETTE[0]!;
-  const checkedDays = t ? normalizeDays(t.days) : [...ALL_DAYS];
+  const daysPerWeek = t ? normalizeDaysPerWeek(t.daysPerWeek) : 7;
   openModal('<form data-form="task" data-task-id="' + (taskId || '') + '">' +
     '<h3>' + (t ? 'ویرایش تسک' : 'تسک جدید') + '</h3>' +
     '<label>نام تسک<input type="text" name="name" required maxlength="60" placeholder="مثلا: زبان انگلیسی" value="' + (t ? esc(t.name) : '') + '"></label>' +
     '<label>هدف روزانه به ساعت (اختیاری)<input type="number" name="target" step="any" min="0" max="24" placeholder="مثلا ۲" value="' + (t && t.targetDailyHours ? t.targetDailyHours : '') + '"></label>' +
-    '<div class="daypick-title">روزهای هفته</div><div class="daypick">' +
-    WEEKDAY_PICK.map(w => '<label class="daypick-chip"><input type="checkbox" name="days" value="' + w.day + '"' + (checkedDays.includes(w.day) ? ' checked' : '') + '><span>' + w.label + '</span></label>').join('') +
-    '</div>' +
+    '<label>هدف روز در هفته (۰ تا ۷)<input type="number" name="daysPerWeek" min="0" max="7" step="1" value="' + daysPerWeek + '"></label>' +
+    '<div class="jalali-hint" style="margin:-8px 0 14px">۰ = بدون برنامه پایداری (عدم نمایش در تب امروز) | ۱ تا ۷ = روزهای هدف در هفته</div>' +
     '<div class="swatches">' +
     PALETTE.map(c => '<label class="swatch" style="--c:' + c + '" title=""><input type="radio" name="color" value="' + c + '"' +
       ((t ? !isCustom && t.color === c : !isCustom && c === suggested) ? ' checked' : '') + '></label>').join('') +

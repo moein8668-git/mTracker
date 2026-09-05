@@ -337,10 +337,3 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0;
   .grid2 { grid-template-columns: 1fr; }
   .hero-date { font-size: 1.1rem; }
 }
-.daypick-title{font-size:.84rem;font-weight:600;margin:2px 0 8px}
-.daypick{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
-.daypick-chip{position:relative;display:flex;flex-direction:row;margin:0;cursor:pointer;font-size:.78rem;font-weight:600}
-.daypick-chip input{position:absolute;opacity:0;width:0;height:0;margin:0}
-.daypick-chip span{padding:5px 12px;border:1px solid var(--line);border-radius:var(--radius-s);color:var(--muted)}
-.daypick-chip input:checked + span{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
-.daypick-chip input:focus-visible + span{outline:2px solid var(--accent);outline-offset:1px}

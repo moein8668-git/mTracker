@@ -1,11 +1,9 @@
 /* Layer 1 — storage & repository  [SEAM: swap for IndexedDB, then a sync API] */
 
 import type { DBData, Entry, Task } from './types';
-import { uid } from './utils';
-import { PALETTE } from './utils';
-import { normalizeDays } from './jalali';
+import { uid, PALETTE, normalizeDaysPerWeek } from './utils';
 
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 export const DB_KEY = 'mtracker.db.v1';
 
 /**
@@ -15,10 +13,10 @@ export const DB_KEY = 'mtracker.db.v1';
 export function migrate(db: unknown): DBData | null {
   if (!db || typeof db !== 'object') return null;
   const d = db as Partial<DBData>;
-  if (d.schemaVersion === 1) {
-    /* v1 → v2: every task gains a weekday schedule; v1 tasks ran daily. */
+  if (d.schemaVersion === 1 || d.schemaVersion === 2) {
+    /* v1/v2 → v3: convert to daysPerWeek integer (0..7). */
     repairTaskDays(d.tasks);
-    d.schemaVersion = 2;
+    d.schemaVersion = 3;
   }
   if (d.schemaVersion !== SCHEMA_VERSION) return null; /* future upgrades branch here */
   if (!Array.isArray(d.tasks) || !Array.isArray(d.entries)) return null;
@@ -27,10 +25,13 @@ export function migrate(db: unknown): DBData | null {
   return d as DBData;
 }
 
-/** Fill missing/invalid weekday schedules (v1 tasks, hand-edited backups). */
+/** Fill missing/invalid daysPerWeek (v1/v2 tasks, hand-edited backups). */
 function repairTaskDays(tasks: unknown): void {
   if (!Array.isArray(tasks)) return;
-  for (const t of tasks as Partial<Task>[]) t.days = normalizeDays(t.days);
+  for (const t of tasks as Partial<Task & { days?: unknown }>[]) {
+    t.daysPerWeek = normalizeDaysPerWeek(t.daysPerWeek ?? t.days);
+    delete t.days;
+  }
 }
 
 function emptyDb(): DBData {
@@ -94,13 +95,13 @@ export class Repo {
 
   task(id: string): Task | undefined { return this.db.tasks.find(t => t.id === id); }
 
-  createTask({ name, targetDailyHours = 0, color, days }: { name: string; targetDailyHours?: number; color?: string; days?: number[] }): Task {
+  createTask({ name, targetDailyHours = 0, color, daysPerWeek }: { name: string; targetDailyHours?: number; color?: string; daysPerWeek?: number }): Task {
     const t: Task = {
       id: uid(),
       name: String(name).trim(),
       targetDailyHours: +targetDailyHours || 0,
       color: color || PALETTE[this.db.tasks.length % PALETTE.length]!,
-      days: normalizeDays(days),
+      daysPerWeek: normalizeDaysPerWeek(daysPerWeek),
       createdAt: new Date().toISOString(),
       archivedAt: null
     };

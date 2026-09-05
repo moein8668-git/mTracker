@@ -37,19 +37,6 @@ export const J_MONTHS = ['فروردین', 'اردیبهشت', 'خرداد', 'ت
 export const WEEKDAYS = ['یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه', 'شنبه'];
 
 export const weekdayName = (iso: string): string => WEEKDAYS[isoToDate(iso).getDay()]!;
-export const ALL_DAYS = [0, 1, 2, 3, 4, 5, 6];
-/** Saturday-first picker order (Iranian week starts Saturday). */
-export const WEEKDAY_PICK: { day: number; label: string }[] =
-  [6, 0, 1, 2, 3, 4, 5].map(d => ({ day: d, label: WEEKDAYS[d]! }));
-export function normalizeDays(days: unknown): number[] {
-  if (!Array.isArray(days)) return [...ALL_DAYS];
-  const valid = days.filter((d): d is number => Number.isInteger(d) && d >= 0 && d <= 6);
-  const clean = valid.filter((d, i) => valid.indexOf(d) === i);
-  return clean.length ? clean.sort((a, b) => a - b) : [...ALL_DAYS];
-}
-export function isScheduledDay(days: number[], iso: string): boolean {
-  return days.includes(isoToDate(iso).getDay());
-}
 
 export function monthStartOf(date: Date): Date {
   return addDays(date, -(toJ(date).jd - 1));

@@ -22,6 +22,16 @@ export function toNumber(s: unknown): number {
   return isFinite(n) ? n : NaN;
 }
 
+export function normalizeDaysPerWeek(v: unknown): number {
+  if (v === null || v === undefined || v === '') return 7;
+  if (Array.isArray(v)) {
+    return Math.max(0, Math.min(7, v.length));
+  }
+  const n = typeof v === 'number' ? v : Number(v);
+  if (!Number.isFinite(n)) return 7;
+  return Math.max(0, Math.min(7, Math.round(n)));
+}
+
 export function clampHours(h: number): number {
   return Math.min(24, Math.max(0, Math.round(h * 100) / 100));
 }

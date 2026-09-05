@@ -2,7 +2,7 @@
 
 import type { Repo } from '../../storage';
 import { appSettings, fmtHours, FA_DATE_FULL, faNum } from '../../settings';
-import { todayIso, isoOf, isoToDate, addDays, isScheduledDay, normalizeDays } from '../../jalali';
+import { todayIso, isoOf, isoToDate, addDays } from '../../jalali';
 import { taskPeriodAnalysis, streakOf, overallRollingMean } from '../../analysis';
 import { analyze } from '../../analytics';
 import { esc } from '../../utils';
@@ -67,7 +67,7 @@ export function viewDaily(repo: Repo): string {
           ? (e.hours >= t.targetDailyHours ? '<span class="mini-chip hit">هدف برآورده</span>' : '<span class="mini-chip under">زیر هدف</span>')
           : '<span class="mini-chip hit">ثبت شده</span>')
       : '<span class="mini-chip none">ثبت نشده</span>';
-    const restChip = isScheduledDay(normalizeDays(t.days), dIso) ? '' : '<span class="mini-chip none">استراحت</span>';
+
     html += '<div class="day-task">' +
       '<span class="dot" style="--task:' + t.color + '"></span>' +
       '<div class="d-hours' + (e ? '' : ' none') + '">' + (e ? fmtHours(e.hours, s) + ' ساعت' : 'ثبت نشده') + '</div>' +
@@ -78,7 +78,7 @@ export function viewDaily(repo: Repo): string {
       (st > 0 ? 'زنجیره: ' + faNum(st) + ' روز' : 'بدون زنجیره') +
       (e && e.note ? ' | یادداشت: ' + esc(e.note) : '') +
       '</div></div>' +
-      restChip + chip +
+      chip +
       '<div class="d-actions">' +
       '<button class="btn small" data-action="quick-add" data-task="' + t.id + '" data-date="' + dIso + '" data-amount="0.5">+۳۰ دقیقه</button>' +
       '<button class="btn small" data-action="quick-add" data-task="' + t.id + '" data-date="' + dIso + '" data-amount="1">+۱ ساعت</button>' +

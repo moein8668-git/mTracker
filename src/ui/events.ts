@@ -1,7 +1,7 @@
 /* Layer 5 — delegated events. Wires the whole UI to Repo. */
 
 import { appSettings, fmtHours } from '../settings';
-import { todayIso, isoOf, isoToDate, addDays, monthStartOf, prevMonthStart, nextMonthStart, normalizeDays } from '../jalali';
+import { todayIso, isoOf, isoToDate, addDays, monthStartOf, prevMonthStart, nextMonthStart } from '../jalali';
 import { state } from './state';
 import { toast } from './bits';
 import { Repo } from '../storage';
@@ -9,7 +9,7 @@ import { hideDayPop, showDayPop } from './daypop';
 import { closeModal, openEntryModal, openTaskModal, openPomodorusModal, updatePomodorusLink } from './modals';
 import { exportCsv, exportJson, importCsvRows, validateBackup } from '../transfer';
 import { render } from './render';
-import { clampHours, toNumber } from '../utils';
+import { clampHours, toNumber, normalizeDaysPerWeek } from '../utils';
 import { DEFAULT_POMO_PROXY, fetchViaProxy, importPomodorusProfile, normalizePomodorusProfile } from '../pomodorus';
 
 function armButton(btn: HTMLElement, armedLabel: string): void {
@@ -27,9 +27,9 @@ function armButton(btn: HTMLElement, armedLabel: string): void {
 export function loadSample(repo: Repo): void {
   const start = addDays(new Date(), -34);
   const startIso = isoOf(start);
-  const t1 = repo.createTask({ name: 'زبان انگلیسی', targetDailyHours: 2, color: '#4f46e5' });
-  const t2 = repo.createTask({ name: 'برنامه‌نویسی', targetDailyHours: 3, color: '#0e9384' });
-  const t3 = repo.createTask({ name: 'ورزش', targetDailyHours: 1, color: '#175cd3' });
+  const t1 = repo.createTask({ name: 'زبان انگلیسی', targetDailyHours: 2, color: '#4f46e5', daysPerWeek: 7 });
+  const t2 = repo.createTask({ name: 'برنامه‌نویسی', targetDailyHours: 3, color: '#0e9384', daysPerWeek: 5 });
+  const t3 = repo.createTask({ name: 'ورزش', targetDailyHours: 1, color: '#175cd3', daysPerWeek: 7 });
   for (const t of [t1, t2, t3]) t.createdAt = new Date(start.getFullYear(), start.getMonth(), start.getDate(), 12).toISOString();
   let seed = 42;
   const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
@@ -308,12 +308,12 @@ export function attachEvents(repo: Repo): void {
       const color = (customEl && customEl.dataset.chosen === '1' && customEl.value)
         ? customEl.value
         : (checkedEl ? checkedEl.value : undefined);
-      const days = normalizeDays([...formEl.querySelectorAll<HTMLInputElement>('input[name="days"]:checked')].map(c => +c.value));
+      const daysPerWeek = normalizeDaysPerWeek(toNumber((formEl.elements.namedItem('daysPerWeek') as HTMLInputElement).value));
       if (id) {
-        repo.updateTask(id, { name, targetDailyHours: target, ...(color ? { color } : {}), days });
+        repo.updateTask(id, { name, targetDailyHours: target, ...(color ? { color } : {}), daysPerWeek });
         toast('تسک به‌روزرسانی شد');
       } else {
-        repo.createTask({ name, targetDailyHours: target, color, days });
+        repo.createTask({ name, targetDailyHours: target, color, daysPerWeek });
         toast('تسک «' + name + '» ساخته شد');
       }
       closeModal();
