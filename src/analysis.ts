@@ -43,7 +43,7 @@ export function taskPeriodAnalysis(repo: Repo, task: Task, startIso: string, end
   const e = endIso < todayIso() ? endIso : todayIso();
   if (s > e) return { ...EMPTY_RESULT, startIso: s, endIso: e };
   return {
-    ...analyze({ startIso: s, endIso: e, entries: repo.entriesForTask(task.id), target: task.targetDailyHours }),
+    ...analyze({ startIso: s, endIso: e, entries: repo.entriesForTask(task.id), target: task.targetDailyHours, daysPerWeek: task.daysPerWeek }),
     startIso: s, endIso: e
   };
 }
@@ -52,7 +52,7 @@ export function taskWeekAnalysis(repo: Repo, task: Task): AnalyzeResult | null {
   const endIso = todayIso();
   const startIso = periodStartFor(repo, task, isoOf(addDays(new Date(), -6)));
   if (startIso > endIso) return null;
-  return analyze({ startIso, endIso, entries: repo.entriesForTask(task.id), target: task.targetDailyHours });
+  return analyze({ startIso, endIso, entries: repo.entriesForTask(task.id), target: task.targetDailyHours, daysPerWeek: task.daysPerWeek });
 }
 
 export function overallPeriodAnalysis(repo: Repo, startIso: string, endIso: string): AnalyzeResult {

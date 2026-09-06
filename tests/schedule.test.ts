@@ -75,18 +75,128 @@ describe('schema migrations (v1/v2 → v3)', () => {
   });
 });
 
-describe('analyze includes all calendar days and logged hours', () => {
-  it('counts hours worked on any day and calculates mean over all days in period', () => {
+describe('weekly best-days analysis based on daysPerWeek', () => {
+  it('evaluates the best k days per week when 0 < daysPerWeek < 7', () => {
+    // User logged 5 days in a 7-day week: 4h, 3h, 2h, 1.5h, 1h, 0h, 0h
+    const entries = [
+      { date: '2026-09-01', hours: 4 },
+      { date: '2026-09-02', hours: 3 },
+      { date: '2026-09-03', hours: 2 },
+      { date: '2026-09-04', hours: 1.5 },
+      { date: '2026-09-05', hours: 1 },
+    ];
+    const r = analyze({ startIso: '2026-09-01', endIso: '2026-09-07', entries, daysPerWeek: 3 });
+    
+    // All 7 days in days array and total
+    expect(r.n).toBe(7);
+    expect(r.days.length).toBe(7);
+    expect(r.total).toBe(11.5);
+    expect(r.activeDays).toBe(5);
+    
+    // Mean and SD calculated from top 3 days: [4, 3, 2]
+    // Mean = (4 + 3 + 2) / 3 = 3.0
+    expect(r.mean).toBeCloseTo(3.0);
+    // SD = sqrt(((4-3)^2 + (3-3)^2 + (2-3)^2) / 3) = sqrt(2/3) ≈ 0.8165
+    expect(r.sd).toBeCloseTo(Math.sqrt(2 / 3));
+    // sdLimit = 1.5, SD (0.8165) < sdLimit (1.5) → status: 'ok'
+    expect(r.status).toBe('ok');
+  });
+
+  it('pads with zero-hour days when user logged fewer days than target', () => {
+    // User target is 3 days/week, but only logged 2 days: 3h, 3h
+    const entries = [
+      { date: '2026-09-01', hours: 3 },
+      { date: '2026-09-02', hours: 3 },
+    ];
+    const r = analyze({ startIso: '2026-09-01', endIso: '2026-09-07', entries, daysPerWeek: 3 });
+    
+    expect(r.n).toBe(7);
+    expect(r.total).toBe(6);
+    expect(r.activeDays).toBe(2);
+    
+    // Best 3 days: [3, 3, 0] (includes 1 zero day because only 2 days were worked)
+    // Mean = (3 + 3 + 0) / 3 = 2.0
+    expect(r.mean).toBeCloseTo(2.0);
+    // Variance = ((3-2)^2 + (3-2)^2 + (0-2)^2) / 3 = 6 / 3 = 2.0 → SD = sqrt(2) ≈ 1.414
+    expect(r.sd).toBeCloseTo(Math.SQRT2);
+    // sdLimit = 1.0, SD (1.414) > sdLimit (1.0) → status: 'volatile'
+    expect(r.status).toBe('volatile');
+  });
+
+  it('gives perfect stability when user meets exact target days consistently', () => {
+    // User target is 4 days/week, logged exactly 4 days with 2h each
     const entries = [
       { date: '2026-09-01', hours: 2 },
-      { date: '2026-09-03', hours: 4 },
-      { date: '2026-09-05', hours: 1 }
+      { date: '2026-09-02', hours: 2 },
+      { date: '2026-09-03', hours: 2 },
+      { date: '2026-09-04', hours: 2 },
     ];
-    const r = analyze({ startIso: '2026-09-01', endIso: '2026-09-05', entries });
-    expect(r.n).toBe(5); // 5 days: Sep 1..5
-    expect(r.total).toBe(7);
-    expect(r.mean).toBeCloseTo(1.4);
-    expect(r.activeDays).toBe(3);
+    const r = analyze({ startIso: '2026-09-01', endIso: '2026-09-07', entries, daysPerWeek: 4 });
+    
+    expect(r.mean).toBeCloseTo(2.0);
+    expect(r.sd).toBeCloseTo(0.0);
+    expect(r.status).toBe('ok');
+  });
+
+  it('analyzes all days when daysPerWeek is 7', () => {
+    // 5 days worked with 2h each in a 7-day week
+    const entries = [
+      { date: '2026-09-01', hours: 2 },
+      { date: '2026-09-02', hours: 2 },
+      { date: '2026-09-03', hours: 2 },
+      { date: '2026-09-04', hours: 2 },
+      { date: '2026-09-05', hours: 2 },
+    ];
+    const r = analyze({ startIso: '2026-09-01', endIso: '2026-09-07', entries, daysPerWeek: 7 });
+    
+    // All 7 days evaluated: [2, 2, 2, 2, 2, 0, 0]
+    expect(r.mean).toBeCloseTo(10 / 7);
+    expect(r.sd).toBeGreaterThan(0);
+  });
+
+  it('provides mean and SD over all calendar days for daysPerWeek: 0 with nodata status', () => {
+    const entries = [
+      { date: '2026-09-01', hours: 4 },
+      { date: '2026-09-02', hours: 2 },
+    ];
+    const r = analyze({ startIso: '2026-09-01', endIso: '2026-09-04', entries, daysPerWeek: 0 });
+    
+    // 4 calendar days: [4, 2, 0, 0]
+    expect(r.n).toBe(4);
+    expect(r.total).toBe(6);
+    expect(r.mean).toBeCloseTo(1.5);
+    // Population SD of [4, 2, 0, 0] with mean 1.5: sqrt(((2.5)^2 + (0.5)^2 + (-1.5)^2 + (-1.5)^2) / 4) = sqrt(11 / 4) = 1.6583
+    expect(r.sd).toBeCloseTo(Math.sqrt(11 / 4));
+    expect(r.status).toBe('nodata');
+  });
+
+  it('samples best k days of each week in multi-week periods', () => {
+    // 2 full weeks: Sat 2026-08-22 to Fri 2026-09-04 (14 days)
+    // Week 1: 5 days logged (4, 3, 2, 1, 1, 0, 0) → best 3: [4, 3, 2]
+    // Week 2: 3 days logged (3, 3, 3, 0, 0, 0, 0) → best 3: [3, 3, 3]
+    const entries = [
+      { date: '2026-08-22', hours: 4 },
+      { date: '2026-08-23', hours: 3 },
+      { date: '2026-08-24', hours: 2 },
+      { date: '2026-08-25', hours: 1 },
+      { date: '2026-08-26', hours: 1 },
+      { date: '2026-08-29', hours: 3 },
+      { date: '2026-08-30', hours: 3 },
+      { date: '2026-08-31', hours: 3 },
+    ];
+    const r = analyze({ startIso: '2026-08-22', endIso: '2026-09-04', entries, daysPerWeek: 3 });
+    
+    expect(r.n).toBe(14);
+    expect(r.days.length).toBe(14);
+    expect(r.total).toBe(20);
+    expect(r.activeDays).toBe(8);
+    
+    // 6 sample days: [4, 3, 2, 3, 3, 3]
+    // Mean = 18 / 6 = 3.0
+    expect(r.mean).toBeCloseTo(3.0);
+    // SD = sqrt((1 + 0 + 1 + 0 + 0 + 0) / 6) = sqrt(2/6) = sqrt(1/3) ≈ 0.57735
+    expect(r.sd).toBeCloseTo(Math.sqrt(1 / 3));
+    expect(r.status).toBe('ok');
   });
 });
 
