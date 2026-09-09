@@ -2,8 +2,10 @@
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0E1114">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>mTracker - سیستم استمرار (SD Method)</title>
 <link rel="icon" type="image/png" sizes="64x64" href="/icons/favicon-dark-64.png">
 </head>
@@ -14,6 +16,7 @@
       <img class="logo" src="/icons/icon-dark-192.png" alt="mTracker" width="31" height="31">
       <span>mTracker<small>سیستم استمرار (SD Method)</small></span>
     </div>
+    <!-- تب‌های دسکتاپ -->
     <nav class="tabs" aria-label="بخش‌ها">
       <button data-action="tab" data-tab="today" class="active">امروز</button>
       <button data-action="tab" data-tab="daily">روزانه</button>
@@ -21,9 +24,38 @@
       <button data-action="tab" data-tab="tasks">تسک‌ها</button>
       <button data-action="tab" data-tab="data">داده‌ها</button>
     </nav>
+    <button type="button" class="icon-btn" data-action="open-settings" aria-label="تنظیمات">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
   </div>
 </header>
+
 <main class="wrap" id="app"></main>
+
+<!-- ناوبری مدرن پایینی برای موبایل با دسترسی شست دست -->
+<nav class="bottom-nav" aria-label="ناوبری موبایل">
+  <button class="bn-item active" data-action="tab" data-tab="today">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>امروز</span>
+  </button>
+  <button class="bn-item" data-action="tab" data-tab="daily">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M8 2v4"/><path d="M16 2v4"/></svg>
+    <span>روزانه</span>
+  </button>
+  <button class="bn-item" data-action="tab" data-tab="report">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg>
+    <span>گزارش</span>
+  </button>
+  <button class="bn-item" data-action="tab" data-tab="tasks">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><path d="M7 7h.01"/></svg>
+    <span>تسک‌ها</span>
+  </button>
+  <button class="bn-item" data-action="tab" data-tab="data">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg>
+    <span>داده‌ها</span>
+  </button>
+</nav>
+
 <div id="modal-root"></div>
 <input type="file" id="import-file" accept=".csv,.json,text/csv,application/json" hidden>
 <noscript><p style="text-align:center;padding:40px">این برنامه به جاوااسکریپت نیاز دارد.</p></noscript>

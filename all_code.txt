@@ -27,7 +27,7 @@ mtracker/
 │   ├── analytics.ts               # Core statistical engine (mean, standard deviation, consistency index)
 │   ├── analysis.ts                # Period evaluation, goal tracking, category aggregations
 │   ├── pomodorus.ts               # Pomodoro timer engine (work/break intervals, session transitions)
-│   ├── main.ts                    # Bootstrap module (DOM mount, SW registration, global handlers)
+│   ├── main.ts                    # Bootstrap module (DOM mount, SW registration, global handlers, phonon field)
 │   ├── styles.css                 # Comprehensive CSS design system (dark/light theme, RTL, responsive)
 │   │
 │   ├── ui/ — UI State, Components & Event Engine
@@ -75,65 +75,65 @@ TABLE OF CONTENTS
 ================================================================================
 
 ### Configuration & Project Files
-  - package.json (22 lines, 441 bytes)
-  - tsconfig.json (16 lines, 393 bytes)
-  - vite.config.ts (48 lines, 1649 bytes)
-  - wrangler.jsonc (9 lines, 231 bytes)
-  - .gitignore (9 lines, 146 bytes)
-  - index.html (32 lines, 1323 bytes)
+  - package.json (22 lines, 463 bytes)
+  - tsconfig.json (16 lines, 409 bytes)
+  - vite.config.ts (48 lines, 1768 bytes)
+  - wrangler.jsonc (9 lines, 242 bytes)
+  - .gitignore (9 lines, 157 bytes)
+  - index.html (32 lines, 1447 bytes)
 
 ### Core Application Logic (src/)
-  - src/types.ts (58 lines, 1214 bytes)
-  - src/utils.ts (37 lines, 1504 bytes)
-  - src/jalali.ts (77 lines, 2509 bytes)
-  - src/period.ts (48 lines, 1913 bytes)
-  - src/settings.ts (27 lines, 1170 bytes)
-  - src/storage.ts (154 lines, 5236 bytes)
-  - src/transfer.ts (115 lines, 4795 bytes)
-  - src/analytics.ts (108 lines, 3379 bytes)
-  - src/analysis.ts (99 lines, 4093 bytes)
-  - src/pomodorus.ts (117 lines, 4460 bytes)
-  - src/main.ts (39 lines, 1789 bytes)
-  - src/styles.css (1199 lines, 59759 bytes)
+  - src/types.ts (58 lines, 1276 bytes)
+  - src/utils.ts (37 lines, 1548 bytes)
+  - src/jalali.ts (77 lines, 2684 bytes)
+  - src/period.ts (48 lines, 2007 bytes)
+  - src/settings.ts (27 lines, 1198 bytes)
+  - src/storage.ts (154 lines, 5433 bytes)
+  - src/transfer.ts (115 lines, 4912 bytes)
+  - src/analytics.ts (108 lines, 3493 bytes)
+  - src/analysis.ts (99 lines, 4263 bytes)
+  - src/pomodorus.ts (117 lines, 4583 bytes)
+  - src/main.ts (914 lines, 17142 bytes)
+  - src/styles.css (1270 lines, 62824 bytes)
 
 ### UI State, Components & Engine (src/ui/)
-  - src/ui/state.ts (26 lines, 789 bytes)
-  - src/ui/bits.ts (53 lines, 1774 bytes)
-  - src/ui/render.ts (56 lines, 1997 bytes)
-  - src/ui/wall.ts (66 lines, 3246 bytes)
-  - src/ui/jcal.ts (85 lines, 4316 bytes)
-  - src/ui/daypop.ts (44 lines, 1725 bytes)
-  - src/ui/modals.ts (225 lines, 14411 bytes)
-  - src/ui/events.ts (591 lines, 24851 bytes)
+  - src/ui/state.ts (26 lines, 816 bytes)
+  - src/ui/bits.ts (53 lines, 1978 bytes)
+  - src/ui/render.ts (56 lines, 2054 bytes)
+  - src/ui/wall.ts (66 lines, 3353 bytes)
+  - src/ui/jcal.ts (85 lines, 4457 bytes)
+  - src/ui/daypop.ts (44 lines, 1790 bytes)
+  - src/ui/modals.ts (225 lines, 15562 bytes)
+  - src/ui/events.ts (591 lines, 26693 bytes)
 
 ### UI Views (src/ui/views/)
-  - src/ui/views/today.ts (147 lines, 8896 bytes)
-  - src/ui/views/daily.ts (100 lines, 6011 bytes)
-  - src/ui/views/report.ts (225 lines, 14249 bytes)
-  - src/ui/views/tasks.ts (102 lines, 5986 bytes)
-  - src/ui/views/data.ts (520 lines, 14586 bytes)
+  - src/ui/views/today.ts (147 lines, 9784 bytes)
+  - src/ui/views/daily.ts (100 lines, 6703 bytes)
+  - src/ui/views/report.ts (225 lines, 14959 bytes)
+  - src/ui/views/tasks.ts (102 lines, 6385 bytes)
+  - src/ui/views/data.ts (520 lines, 16037 bytes)
 
 ### UI Charts & Visualization (src/ui/charts/)
-  - src/ui/charts/bars.ts (61 lines, 3276 bytes)
-  - src/ui/charts/line.ts (325 lines, 10656 bytes)
+  - src/ui/charts/bars.ts (61 lines, 3423 bytes)
+  - src/ui/charts/line.ts (334 lines, 11610 bytes)
 
-### Test Suite (tests/)
-  - tests/analysis-period.test.ts (82 lines, 3491 bytes)
-  - tests/analytics.test.ts (59 lines, 2749 bytes)
-  - tests/csv.test.ts (80 lines, 2855 bytes)
-  - tests/jalali.test.ts (41 lines, 1815 bytes)
-  - tests/linechart.test.ts (54 lines, 1928 bytes)
-  - tests/pomodorus.test.ts (136 lines, 5676 bytes)
-  - tests/schedule.test.ts (248 lines, 9759 bytes)
-  - tests/storage.test.ts (93 lines, 3270 bytes)
+### Vitest Test Suite (tests/)
+  - tests/analysis-period.test.ts (82 lines, 3585 bytes)
+  - tests/analytics.test.ts (59 lines, 2814 bytes)
+  - tests/csv.test.ts (80 lines, 3005 bytes)
+  - tests/jalali.test.ts (41 lines, 1864 bytes)
+  - tests/linechart.test.ts (54 lines, 1992 bytes)
+  - tests/pomodorus.test.ts (136 lines, 5865 bytes)
+  - tests/schedule.test.ts (248 lines, 10095 bytes)
+  - tests/storage.test.ts (93 lines, 3371 bytes)
 
 ### Documentation
-  - README.md (45 lines, 1553 bytes)
-  - ROADMAP.md (104 lines, 5663 bytes)
-  - MIGRATION.md (152 lines, 7383 bytes)
+  - README.md (45 lines, 2194 bytes)
+  - ROADMAP.md (104 lines, 9518 bytes)
+  - MIGRATION.md (152 lines, 11454 bytes)
 
 Total Files: 44
-Total Lines: 5934
+Total Lines: 6889
 
 ################################################################################
 # SECTION: Configuration & Project Files
@@ -1089,6 +1089,7 @@ export function overallRollingMean(repo: Repo, days: number, endIso: string): nu
   }).mean;
 }
 
+
 [END OF FILE: src/analysis.ts]
 
 ================================================================================
@@ -1211,50 +1212,926 @@ function applyDay(
   return true;
 }
 
+
 [END OF FILE: src/pomodorus.ts]
 
 ================================================================================
 FILE: src/main.ts
 ================================================================================
 /* Bootstrap: theme pre-applied inline in index.html; here we wire repo + events. */
+
 import './styles.css';
+
 import { Storage, Repo } from './storage';
+
 import { state, parseTabId } from './ui/state';
+
 import { render } from './ui/render';
+
 import { attachEvents } from './ui/events';
+
 import { toast } from './ui/bits';
 
+import { overallMonthAnalysis } from './analysis';
+
+import { monthStartOf } from './jalali';
+
+
+
 const repo = new Repo(Storage.load(), msg => toast(msg));
+
 try {
+
   state.tab = parseTabId(localStorage.getItem('mtracker.tab'));
+
   state.chartType = localStorage.getItem('mtracker.chart') === 'line' ? 'line' : 'bar';
+
 } catch { /* private mode: stay on today */ }
+
 attachEvents(repo);
+
 render(repo);
 
+
+
 /* first-visit welcome */
+
 try {
+
   if (!repo.tasks.length && !repo.entries.length && !localStorage.getItem('mtracker.welcomed')) {
+
     localStorage.setItem('mtracker.welcomed', '1');
+
     const root = document.getElementById('modal-root');
+
     if (root) {
+
       root.innerHTML = '<div class="overlay" data-action="overlay-close"><div class="modal" role="dialog" aria-modal="true"><div class="welcome">' +
+
         '<h3>به mTracker خوش آمدی</h3>' +
+
         '<p style="font-size:.9rem;color:var(--muted)">این برنامه بر پایه روش «پایداری» کار می‌کند: مهم نیست یک روز چقدر کار کنی، مهم این است که هر روز کمی کار کنی.</p>' +
+
         '<ol>' +
+
         '<li>یک تسک بساز و هدف روزانه‌اش را مشخص کن</li>' +
+
         '<li>هر روز ساعت کارکردت را ثبت کن</li>' +
+
         '<li>در گزارش ماهانه چک کن: انحراف معیارت باید کمتر از نصف میانگینت باشد</li>' +
+
         '</ol>' +
+
         '<div class="modal-actions">' +
+
         '<button class="btn ghost" data-action="load-sample">دیدن با داده نمونه</button>' +
+
         '<button class="btn primary" data-action="open-task">شروع با اولین تسک</button>' +
+
         '</div></div></div></div>';
+
     }
+
   }
+
 } catch { /* private mode etc. */ }
 
-export { state };
+
+
+/* ==========================================================================
+
+   SOLID-STATE QUANTUM FIELD (HEX-PHONONS & PHOSPHORESCENT INTERFERENCE)
+
+   ========================================================================== */
+
+(function setupQuantumPhononLattice() {
+
+  if (typeof window === 'undefined') return;
+
+
+
+  let canvas = document.getElementById('bg-canvas') as HTMLCanvasElement | null;
+
+  if (!canvas) {
+
+    canvas = document.createElement('canvas');
+
+    canvas.id = 'bg-canvas';
+
+    document.body.prepend(canvas);
+
+  }
+
+
+
+  const ctx = canvas.getContext('2d', { alpha: true });
+
+  if (!ctx) return;
+
+
+
+  let dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+  let w = window.innerWidth;
+
+  let h = window.innerHeight;
+
+
+
+  const GRID_STEP = 19; // گام متراکم، دقیق و مینیاتوری
+
+  let cols = 0;
+
+  let rows = 0;
+
+
+
+  interface PhononNode {
+
+    ox: number;
+
+    oy: number;
+
+    x: number;
+
+    y: number;
+
+    vx: number;
+
+    vy: number;
+
+    ax: number;
+
+    ay: number;
+
+    baseR: number;
+
+    mass: number;
+
+    r: number;
+
+    g: number;
+
+    b: number;
+
+    strain: number;
+
+    phosphor: number; // پایداری پس‌درخشش فسفرسانس
+
+    phase: number;
+
+  }
+
+
+
+  let nodes: PhononNode[] = [];
+
+  let gridMatrix: (PhononNode | null)[][] = [];
+
+
+
+  function hexToRgb(hex: string): [number, number, number] {
+
+    const c = hex.replace('#', '');
+
+    if (c.length === 6) {
+
+      const num = parseInt(c, 16);
+
+      return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
+
+    }
+
+    return [79, 163, 163];
+
+  }
+
+
+
+  function getDynamicPalettes(): [number, number, number][] {
+
+    const active = repo.activeTasks();
+
+    if (active.length > 0) {
+
+      return active.map(t => hexToRgb(t.color));
+
+    }
+
+    return [[79, 163, 163], [56, 189, 248], [127, 176, 138]];
+
+  }
+
+
+
+  function buildLattice() {
+
+    nodes = [];
+
+    gridMatrix = [];
+
+    cols = Math.floor(w / GRID_STEP) + 2;
+
+    rows = Math.floor(h / GRID_STEP) + 2;
+
+    const startX = (w - (cols - 1) * GRID_STEP) / 2;
+
+    const startY = (h - (rows - 1) * GRID_STEP) / 2;
+
+    const palettes = getDynamicPalettes();
+
+
+
+    for (let r = 0; r < rows; r++) {
+
+      gridMatrix[r] = [];
+
+      for (let c = 0; c < cols; c++) {
+
+        const x = startX + c * GRID_STEP;
+
+        const y = startY + r * GRID_STEP;
+
+        const color = palettes[(r + c) % palettes.length]!;
+
+
+
+        const node: PhononNode = {
+
+          ox: x,
+
+          oy: y,
+
+          x,
+
+          y,
+
+          vx: 0,
+
+          vy: 0,
+
+          ax: 0,
+
+          ay: 0,
+
+          baseR: 0.95,
+
+          mass: 0.95 + Math.sin(r * 0.35) * Math.cos(c * 0.35) * 0.15,
+
+          r: color[0],
+
+          g: color[1],
+
+          b: color[2],
+
+          strain: 0,
+
+          phosphor: 0,
+
+          phase: Math.random() * Math.PI * 2
+
+        };
+
+
+
+        nodes.push(node);
+
+        gridMatrix[r]![c] = node;
+
+      }
+
+    }
+
+  }
+
+
+
+  function resize() {
+
+    if (!canvas || !ctx) return;
+
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    w = window.innerWidth;
+
+    h = window.innerHeight;
+
+    canvas.width = w * dpr;
+
+    canvas.height = h * dpr;
+
+    ctx.scale(dpr, dpr);
+
+    buildLattice();
+
+  }
+
+  resize();
+
+  window.addEventListener('resize', resize, { passive: true });
+
+
+
+  const mouse = {
+
+    x: -3000,
+
+    y: -3000,
+
+    targetX: -3000,
+
+    targetY: -3000,
+
+    vx: 0,
+
+    vy: 0,
+
+    prevX: -3000,
+
+    prevY: -3000,
+
+    active: false,
+
+    hoverScalar: 0
+
+  };
+
+
+
+  interface QuantumShockwave {
+
+    x: number;
+
+    y: number;
+
+    radius: number;
+
+    energy: number;
+
+    implosionTimer: number;
+
+    interferencePhase: number;
+
+  }
+
+
+
+  const shockwaves: QuantumShockwave[] = [];
+
+  let isPageVisible = true;
+
+  let tick = 0;
+
+
+
+  document.addEventListener('visibilitychange', () => {
+
+    isPageVisible = !document.hidden;
+
+  });
+
+
+
+  let cardUpdateQueued = false;
+
+  window.addEventListener('pointermove', (e) => {
+
+    mouse.targetX = e.clientX;
+
+    mouse.targetY = e.clientY;
+
+    mouse.active = true;
+
+
+
+    if (!cardUpdateQueued) {
+
+      cardUpdateQueued = true;
+
+      requestAnimationFrame(() => {
+
+        const cards = document.querySelectorAll<HTMLElement>('.card');
+
+        for (let i = 0; i < cards.length; i++) {
+
+          const card = cards[i]!;
+
+          const rect = card.getBoundingClientRect();
+
+          if (
+
+            e.clientX >= rect.left - 60 &&
+
+            e.clientX <= rect.right + 60 &&
+
+            e.clientY >= rect.top - 60 &&
+
+            e.clientY <= rect.bottom + 60
+
+          ) {
+
+            card.style.setProperty('--card-mx', `${e.clientX - rect.left}px`);
+
+            card.style.setProperty('--card-my', `${e.clientY - rect.top}px`);
+
+          }
+
+        }
+
+        cardUpdateQueued = false;
+
+      });
+
+    }
+
+  }, { passive: true });
+
+
+
+  window.addEventListener('pointerleave', () => {
+
+    mouse.active = false;
+
+  });
+
+
+
+  // انفجار فوتونی دو مرحله‌ای با ضربه شرودینگر
+
+  window.addEventListener('pointerdown', (e) => {
+
+    shockwaves.push({
+
+      x: e.clientX,
+
+      y: e.clientY,
+
+      radius: 3,
+
+      energy: 26,
+
+      implosionTimer: 5,
+
+      interferencePhase: Math.random() * Math.PI * 2
+
+    });
+
+
+
+    for (let i = 0; i < nodes.length; i++) {
+
+      const node = nodes[i]!;
+
+      const dx = e.clientX - node.x;
+
+      const dy = e.clientY - node.y;
+
+      const d = Math.hypot(dx, dy);
+
+      if (d < 150 && d > 1) {
+
+        const implode = Math.pow((150 - d) / 150, 2.2) * 9.2;
+
+        node.vx += (dx / d) * implode;
+
+        node.vy += (dy / d) * implode;
+
+        node.phosphor = Math.min(1, node.phosphor + (1 - d / 150) * 0.8);
+
+      }
+
+    }
+
+  });
+
+
+
+  // ثوابت فیزیک شبکه بس‌ذره‌ای
+
+  const RESTORE_K = 0.056;
+
+  const PHONON_ORTHO = 0.018; // جفت‌شدگی عمودی/افقی
+
+  const PHONON_DIAG = 0.007;  // جفت‌شدگی فونونی قطری (آن‌ایزوتروپی هگزاگونال)
+
+  const DAMPING = 0.865;
+
+  const DISPERSAL_LIMIT = 15;
+
+  const INTERACTION_CUTOFF = 78;
+
+
+
+  function draw() {
+
+    requestAnimationFrame(draw);
+
+    if (!ctx || !isPageVisible) return;
+
+
+
+    ctx.clearRect(0, 0, w, h);
+
+    tick += 0.016;
+
+
+
+    mouse.vx = mouse.targetX - mouse.prevX;
+
+    mouse.vy = mouse.targetY - mouse.prevY;
+
+    mouse.prevX = mouse.targetX;
+
+    mouse.prevY = mouse.targetY;
+
+
+
+    mouse.x += (mouse.targetX - mouse.x) * 0.16;
+
+    mouse.y += (mouse.targetY - mouse.y) * 0.16;
+
+    mouse.hoverScalar += ((mouse.active ? 1 : 0) - mouse.hoverScalar) * 0.06;
+
+
+
+    // امواج شوک تداخل کوانتومی
+
+    for (let i = shockwaves.length - 1; i >= 0; i--) {
+
+      const sw = shockwaves[i]!;
+
+      if (sw.implosionTimer > 0) {
+
+        sw.implosionTimer--;
+
+      } else {
+
+        sw.radius += 6.5;
+
+        sw.energy *= 0.945;
+
+        if (sw.energy < 0.12 || sw.radius > 320) {
+
+          shockwaves.splice(i, 1);
+
+          continue;
+
+        }
+
+
+
+        // تداخل موج با فاز سینوسی در جبهه موج
+
+        const waveAlpha = Math.min(0.38, sw.energy * 0.022);
+
+        ctx.beginPath();
+
+        ctx.arc(sw.x, sw.y, sw.radius, 0, Math.PI * 2);
+
+        ctx.strokeStyle = `rgba(79, 163, 163, ${waveAlpha})`;
+
+        ctx.lineWidth = 1.1;
+
+        ctx.stroke();
+
+      }
+
+    }
+
+
+
+    const monthStats = overallMonthAnalysis(repo, monthStartOf(new Date()));
+
+    const stateRgb = monthStats.status === 'ok' ? [127, 176, 138] : (monthStats.status === 'volatile' ? [194, 161, 77] : [79, 163, 163]);
+
+
+
+    const activeNodes: PhononNode[] = [];
+
+
+
+    // ۱. دینامیک شبکه فونونی و محاسبات تنش تانسوری
+
+    for (let r = 0; r < rows; r++) {
+
+      for (let c = 0; c < cols; c++) {
+
+        const node = gridMatrix[r]![c]!;
+
+
+
+        // نیروی بازگرداننده پایه‌ای
+
+        const dxO = node.ox - node.x;
+
+        const dyO = node.oy - node.y;
+
+        node.ax = (dxO * RESTORE_K) / node.mass;
+
+        node.ay = (dyO * RESTORE_K) / node.mass;
+
+
+
+        // جفت‌شدگی ارتوگونال با همسایه‌ها
+
+        if (c > 0) {
+
+          const left = gridMatrix[r]![c - 1]!;
+
+          node.ax += ((left.x - left.ox) - (node.x - node.ox)) * PHONON_ORTHO;
+
+        }
+
+        if (c < cols - 1) {
+
+          const right = gridMatrix[r]![c + 1]!;
+
+          node.ax += ((right.x - right.ox) - (node.x - node.ox)) * PHONON_ORTHO;
+
+        }
+
+        if (r > 0) {
+
+          const top = gridMatrix[r - 1]![c]!;
+
+          node.ay += ((top.y - top.oy) - (node.y - node.oy)) * PHONON_ORTHO;
+
+        }
+
+        if (r < rows - 1) {
+
+          const bottom = gridMatrix[r + 1]![c]!;
+
+          node.ay += ((bottom.y - bottom.oy) - (node.y - node.oy)) * PHONON_ORTHO;
+
+        }
+
+
+
+        // جفت‌شدگی فونونی قطری (پخش تنش آن‌ایزوتروپ)
+
+        if (r > 0 && c > 0) {
+
+          const tl = gridMatrix[r - 1]![c - 1]!;
+
+          node.ax += ((tl.x - tl.ox) - (node.x - node.ox)) * PHONON_DIAG;
+
+          node.ay += ((tl.y - tl.oy) - (node.y - node.oy)) * PHONON_DIAG;
+
+        }
+
+        if (r < rows - 1 && c < cols - 1) {
+
+          const br = gridMatrix[r + 1]![c + 1]!;
+
+          node.ax += ((br.x - br.ox) - (node.x - node.ox)) * PHONON_DIAG;
+
+          node.ay += ((br.y - br.oy) - (node.y - node.oy)) * PHONON_DIAG;
+
+        }
+
+
+
+        // دافعه بوهمی و کشش اسپینی نرم ماوس
+
+        if (mouse.hoverScalar > 0.01) {
+
+          const dxM = node.x - mouse.x;
+
+          const dyM = node.y - mouse.y;
+
+          const distM = Math.hypot(dxM, dyM);
+
+
+
+          if (distM < INTERACTION_CUTOFF && distM > 0.1) {
+
+            const proximity = 1 - (distM / INTERACTION_CUTOFF);
+
+            const repulseForce = Math.pow(proximity, 2.1) * 4.2 * mouse.hoverScalar;
+
+
+
+            const spin = 0.035 * proximity;
+
+            const normX = dxM / distM;
+
+            const normY = dyM / distM;
+
+
+
+            node.ax += normX * repulseForce - normY * (mouse.vy * spin);
+
+            node.ay += normY * repulseForce + normX * (mouse.vx * spin);
+
+
+
+            node.phosphor = Math.min(1, node.phosphor + proximity * 0.08);
+
+          }
+
+        }
+
+
+
+        // موج شوک برهم‌کنش کلیک
+
+        for (let s = 0; s < shockwaves.length; s++) {
+
+          const sw = shockwaves[s]!;
+
+          if (sw.implosionTimer <= 0) {
+
+            const dW = Math.hypot(node.x - sw.x, node.y - sw.y);
+
+            const diff = Math.abs(dW - sw.radius);
+
+
+
+            if (diff < 24) {
+
+              const phase = (diff / 24) * Math.PI;
+
+              const impulse = Math.cos(phase) * (sw.energy / (dW * 0.09 + 1));
+
+              const angle = Math.atan2(node.y - sw.y, node.x - sw.x);
+
+              node.ax += Math.cos(angle) * impulse * 0.48;
+
+              node.ay += Math.sin(angle) * impulse * 0.48;
+
+              node.phosphor = Math.min(1, node.phosphor + Math.cos(phase) * 0.35);
+
+            }
+
+          }
+
+        }
+
+
+
+        node.vx = (node.vx + node.ax) * DAMPING;
+
+        node.vy = (node.vy + node.ay) * DAMPING;
+
+
+
+        // مهار جابه‌جایی الاستیک میکرو
+
+        const dispX = (node.x + node.vx) - node.ox;
+
+        const dispY = (node.y + node.vy) - node.oy;
+
+        const dispMag = Math.hypot(dispX, dispY);
+
+
+
+        if (dispMag > DISPERSAL_LIMIT) {
+
+          const scale = DISPERSAL_LIMIT / dispMag;
+
+          node.vx = (node.ox + dispX * scale) - node.x;
+
+          node.vy = (node.oy + dispY * scale) - node.y;
+
+        }
+
+
+
+        node.x += node.vx;
+
+        node.y += node.vy;
+
+
+
+        // استهلاک نمایی فسفرسانس
+
+        node.phosphor *= 0.955;
+
+
+
+        // تانسور تنش موضعی
+
+        const speed = Math.hypot(node.vx, node.vy);
+
+        const distOrig = Math.hypot(node.x - node.ox, node.y - node.oy);
+
+        node.strain = Math.min(1, (distOrig / DISPERSAL_LIMIT) * 0.72 + (speed / 3.0) * 0.28);
+
+
+
+        if (node.strain > 0.07 || node.phosphor > 0.1) {
+
+          activeNodes.push(node);
+
+        }
+
+
+
+        // پاشش نوری براگ متأثر از فسفرسانس
+
+        const combinedGlow = Math.max(node.strain, node.phosphor);
+
+        const braggShift = combinedGlow * 55;
+
+        const renderR = Math.min(255, Math.floor(node.r + braggShift * 0.25));
+
+        const renderG = Math.min(255, Math.floor(node.g + braggShift * 0.55));
+
+        const renderB = Math.min(255, Math.floor(node.b + braggShift * 0.95));
+
+
+
+        node.phase += 0.02;
+
+        const quantumFlicker = 0.95 + Math.sin(node.phase + tick) * 0.05;
+
+        const nodeAlpha = (0.11 + combinedGlow * 0.58) * quantumFlicker;
+
+        const nodeRadius = node.baseR + combinedGlow * 0.85;
+
+
+
+        ctx.beginPath();
+
+        ctx.arc(node.x, node.y, nodeRadius, 0, Math.PI * 2);
+
+        ctx.fillStyle = `rgba(${renderR}, ${renderG}, ${renderB}, ${nodeAlpha})`;
+
+        ctx.fill();
+
+      }
+
+    }
+
+
+
+    // ۲. تارهای الاستیک فوتونی بین گره‌های برانگیخته
+
+    ctx.lineWidth = 0.65;
+
+    for (let i = 0; i < activeNodes.length; i++) {
+
+      const p1 = activeNodes[i]!;
+
+      for (let j = i + 1; j < activeNodes.length; j++) {
+
+        const p2 = activeNodes[j]!;
+
+        const dx = p1.x - p2.x;
+
+        const dy = p1.y - p2.y;
+
+        const d = Math.hypot(dx, dy);
+
+
+
+        if (d < GRID_STEP * 1.45) {
+
+          const avgGlow = Math.max(
+
+            (p1.strain + p2.strain) * 0.5,
+
+            (p1.phosphor + p2.phosphor) * 0.5
+
+          );
+
+          const alpha = (1 - (d / (GRID_STEP * 1.45))) * avgGlow * 0.42;
+
+
+
+          ctx.beginPath();
+
+          ctx.moveTo(p1.x, p1.y);
+
+          const midX = (p1.x + p2.x) * 0.5 + (p1.vy - p2.vy) * 2.0;
+
+          const midY = (p1.y + p2.y) * 0.5 - (p1.vx - p2.vx) * 2.0;
+
+          ctx.quadraticCurveTo(midX, midY, p2.x, p2.y);
+
+          ctx.strokeStyle = `rgba(${stateRgb[0]}, ${stateRgb[1]}, ${stateRgb[2]}, ${alpha})`;
+
+          ctx.stroke();
+
+        }
+
+      }
+
+    }
+
+  }
+
+
+
+  requestAnimationFrame(draw);
+
+})();
+
+
+
+export { state }; 
+
 
 [END OF FILE: src/main.ts]
 
@@ -2312,13 +3189,73 @@ body { -webkit-tap-highlight-color: transparent; }
 
 
 /* ---------- depth pass: layered background ---------- */
+/* ---------- Interactive Canvas Stage & Deep Layering ---------- */
 body {
-  background:
-    radial-gradient(1100px 480px at 85% -80px, rgba(79, 163, 163, .07), transparent 60%),
-    radial-gradient(900px 420px at 8% 108%, rgba(79, 163, 163, .05), transparent 62%),
-    var(--bg);
-  background-attachment: fixed;
+  background-color: #0b0e12;
+  color: var(--ink);
+  font-family: 'Vazirmatn', system-ui, Tahoma, sans-serif;
+  line-height: 1.9;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
 }
+
+/* بوم پس‌زمینه ذرات */
+#bg-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* کارت‌ها با استایل شیشه‌ای مات تیره */
+.card {
+  position: relative;
+  z-index: 1;
+  background: rgba(18, 23, 28, 0.78) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  overflow: hidden;
+}
+
+/* لبه نوری کارت‌ها هنگام نزدیک شدن ماوس */
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: radial-gradient(
+    320px circle at var(--card-mx, -999px) var(--card-my, -999px),
+    rgba(79, 163, 163, 0.45),
+    transparent 65%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.card:hover::before {
+  opacity: 1;
+}
+
+.card:hover {
+  box-shadow: 0 12px 36px -10px rgba(0, 0, 0, 0.6), 0 0 20px rgba(79, 163, 163, 0.08);
+}
+
+.topbar, .wrap, #modal-root {
+  position: relative;
+  z-index: 1;
+}
+
 .topbar { background: rgba(14, 17, 20, .86); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
 .card { background: linear-gradient(180deg, rgba(255, 255, 255, .015), rgba(255, 255, 255, 0) 42%), var(--surface); }
 
@@ -2458,6 +3395,20 @@ select.em-ctl {
 .em-seg button:active { background: var(--accent-dim); color: var(--accent); }
 .em-hint { color: var(--accent); font-weight: 600; }
 
+
+/* جلوگیری از مسدود شدن کلیک توسط خط اصلی نمودار */
+svg path {
+  pointer-events: none;
+}
+
+/* فعال‌سازی قطعی دریافت کلیک برای نقاط */
+[data-action="open-entry"] {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+
+
 [END OF FILE: src/styles.css]
 
 ################################################################################
@@ -2493,7 +3444,6 @@ export const TABS: readonly TabId[] = ['today', 'daily', 'report', 'tasks', 'dat
 export function parseTabId(v: string | null): TabId {
   return TABS.includes(v as TabId) ? (v as TabId) : 'today';
 }
-
 [END OF FILE: src/ui/state.ts]
 
 ================================================================================
@@ -2614,7 +3564,6 @@ export function render(repo: Repo): void {
   slideTabIndicator();
   hideDayPop();
 }
-
 [END OF FILE: src/ui/render.ts]
 
 ================================================================================
@@ -2686,7 +3635,6 @@ export function wallHTML(days: DayPoint[], s: AppSettings, today: string, endIso
     '<span class="wall-total">' + fmtHours(total, s) + ' ساعت</span></span></div>' +
     '<div class="wall-grid">' + head + cells + '</div></div>';
 }
-
 [END OF FILE: src/ui/wall.ts]
 
 ================================================================================
@@ -2777,7 +3725,6 @@ export function jcalHTML(repo: Repo, viewMonthStartIso: string, selectedIso: str
     glance +
     '</div>';
 }
-
 [END OF FILE: src/ui/jcal.ts]
 
 ================================================================================
@@ -3058,7 +4005,6 @@ export function updatePomodorusLink(): void {
   const url = 'https://pomodorus.yazdan.me/api/profile/' + encodeURIComponent(name) + '?days=90';
   hint.innerHTML = 'لینک داده‌ات: <a href="' + esc(url) + '" target="_blank" rel="noopener noreferrer" dir="ltr">' + esc(url) + '</a>';
 }
-
 [END OF FILE: src/ui/modals.ts]
 
 ================================================================================
@@ -3655,7 +4601,6 @@ export function attachEvents(repo: Repo): void {
   });
   window.addEventListener('scroll', hideDayPop, { passive: true });
 }
-
 [END OF FILE: src/ui/events.ts]
 
 ################################################################################
@@ -3812,7 +4757,6 @@ export function viewToday(repo: Repo): string {
   html += '<div class="task-grid">' + gridContent + '</div>';
   return html;
 }
-
 [END OF FILE: src/ui/views/today.ts]
 
 ================================================================================
@@ -3918,7 +4862,6 @@ export function viewDaily(repo: Repo): string {
   html += '</section>';
   return html;
 }
-
 [END OF FILE: src/ui/views/daily.ts]
 
 ================================================================================
@@ -4149,7 +5092,6 @@ export function viewReport(repo: Repo): string {
   html += '</div>';
   return html;
 }
-
 [END OF FILE: src/ui/views/report.ts]
 
 ================================================================================
@@ -4257,7 +5199,6 @@ export function viewTasks(repo: Repo): string {
   html += '</div>';
   return html;
 }
-
 [END OF FILE: src/ui/views/tasks.ts]
 
 ================================================================================
@@ -4783,7 +5724,6 @@ export function viewData(repoOrCount: Repo | number): string {
     </div>
   `.trim();
 }
-
 [END OF FILE: src/ui/views/data.ts]
 
 ################################################################################
@@ -4854,7 +5794,6 @@ export function chartHTML(days: DayPoint[], opts: { mean?: number; target?: numb
       (target > 0 ? '<span class="lg-target"><i></i>هدف ' + fmtHours(target, s) + '</span>' : '') +
       '</div>' : '') + axisCaption();
 }
-
 [END OF FILE: src/ui/charts/bars.ts]
 
 ================================================================================
@@ -4901,7 +5840,6 @@ function smoothPath(pts: { x: number; y: number }[], yTop: number, yBase: number
     const p2 = pts[i + 1]!;
     const p3 = pts[i + 2 < n ? i + 2 : n - 1]!;
 
-    // جلوگیری از موج زدن خطوط در کف؛ اگر دو روز متوالی صفر باشند، خط کاملاً صاف می‌ماند
     if (Math.abs(p1.y - yBase) < 0.5 && Math.abs(p2.y - yBase) < 0.5) {
       d += ' L' + p2.x.toFixed(1) + ' ' + yBase.toFixed(1);
       continue;
@@ -4981,7 +5919,8 @@ export function lineChartHTML(
     clickable?: boolean;
     h?: number;
     hoverDay?: boolean;
-  },
+    taskId?: string | null;
+  } = {},
   s: AppSettings
 ): string {
   const n = days.length;
@@ -4992,7 +5931,6 @@ export function lineChartHTML(
   const W = 700;
   const H = Math.max(h, 190);
 
-  /* حاشیه‌های امن برای جداسازی کامل اعداد محورها از بدنه نمودار */
   const padL = rtl ? 35 : 75;
   const padR = rtl ? 75 : 35;
   const padT = 24;
@@ -5054,7 +5992,6 @@ export function lineChartHTML(
       '</text>';
   }
 
-  /* رسم خطوط و گرادیان هوشمند */
   const seq = gradSeq++;
   const isMulti = series.length > 1;
   const totalSer = series.find(s => s.total) || (isMulti ? null : series[0]);
@@ -5063,21 +6000,22 @@ export function lineChartHTML(
   let areas = '';
   let paths = '';
 
-  // استایل‌های درون‌پاشیده‌شده برای تعامل روان و بدون نیاز به JS اضافه
   const styles = `
     <style>
-      .lc-line { transition: opacity 0.2s ease, stroke-width 0.2s ease; }
+      .lc-line { transition: opacity 0.2s ease, stroke-width 0.2s ease; pointer-events: none; }
       .linechart:hover .lc-line { opacity: 0.25; }
       .linechart .lc-line:hover { opacity: 1 !important; stroke-width: 2.8px !important; }
-      .lc-day-col { cursor: crosshair; }
-      .lc-day-col .lc-guide { opacity: 0; transition: opacity 0.15s ease; }
-      .lc-day-col .lc-hover-dot { opacity: 0; transition: opacity 0.15s ease, transform 0.15s ease; transform-box: fill-box; transform-origin: center; }
+      .lc-hero-area { pointer-events: none; }
+      .lc-day-col { cursor: default; }
+      .lc-day-col.clickable { cursor: pointer; }
+      .lc-day-col .lc-guide { opacity: 0; transition: opacity 0.15s ease; pointer-events: none; }
+      .lc-day-col .lc-hover-dot { opacity: 0; transition: opacity 0.15s ease, transform 0.15s ease; transform-box: fill-box; transform-origin: center; pointer-events: none; }
       .lc-day-col:hover .lc-guide { opacity: 1; }
       .lc-day-col:hover .lc-hover-dot { opacity: 1; transform: scale(1.3); }
+      .lc-hit-area { pointer-events: all; }
     </style>
   `;
 
-  // تنها یک گرادیان زیر خط مجموع کشیده می‌شود تا چارت گل‌آلود نشود
   if (totalSer) {
     const segs = segmentsOf(totalSer.values, X, Y);
     let dArea = '';
@@ -5101,7 +6039,6 @@ export function lineChartHTML(
     }
   }
 
-  // رسم خطوط تسک‌ها با ضخامت‌های تفکیک‌شده
   series.forEach((ser) => {
     const segs = segmentsOf(ser.values, X, Y);
     let dLine = '';
@@ -5117,19 +6054,22 @@ export function lineChartHTML(
     `;
   });
 
-  /* ستون‌های تعاملی هاور + نشانگر خط‌کش و نقاط فعال */
+  // استخراج taskId تسک (دقیقاً مشابه نمودار میله‌ای)
+  const currentTaskId =
+    opts.taskId ||
+    (series.length === 1 && series[0]?.taskId ? series[0].taskId : (series.find(sr => sr.taskId && !sr.total)?.taskId || null));
+
   const colW = n > 1 ? step : plotW;
   let interaction = '';
 
   for (let i = 0; i < n; i++) {
     const cx = X(i);
-    const safeDate = esc(days[i]!.date);
+    const dateStr = days[i]!.date;
+    const safeDate = esc(dateStr);
 
-    // محاسبه برچسب راهنمای روز برای تولتیپ
-    let tip = esc(jDayLabel(days[i]!.date)) + '\n────────────────\n';
+    let tip = esc(jDayLabel(dateStr)) + '\n────────────────\n';
     let hasData = false;
 
-    // نقاط فقط درون المان فعال هاور برای همان روز ایجاد می‌شوند
     let dayDots = '';
     for (const ser of series) {
       const v = ser.values[i];
@@ -5148,17 +6088,25 @@ export function lineChartHTML(
       tip += 'بدون ثبت کارکرد';
     }
 
+    // هماهنگی دقیق با ساختار attrs در bars.ts
+    const clickAttrs = currentTaskId
+      ? `class="lc-day-col clickable" data-action="edit-day" data-task="${esc(currentTaskId)}" data-date="${safeDate}" data-hover-day="${safeDate}"`
+      : `class="lc-day-col" data-hover-day="${safeDate}"`;
+
+    const hitAreaAttrs = currentTaskId
+      ? `data-action="edit-day" data-task="${esc(currentTaskId)}" data-date="${safeDate}" style="cursor:pointer;"`
+      : `style="cursor:default;"`;
+
     interaction += `
-      <g class="lc-day-col" data-hover-day="${safeDate}">
+      <g ${clickAttrs}>
         <title>${tip.trim()}</title>
         <line class="lc-guide" x1="${cx.toFixed(1)}" y1="${padT}" x2="${cx.toFixed(1)}" y2="${yBase}" stroke="rgba(255,255,255,0.2)" stroke-dasharray="3,3" stroke-width="1.2"/>
         ${dayDots}
-        <rect class="lc-hit-area" x="${(cx - colW / 2).toFixed(1)}" y="${padT}" width="${colW.toFixed(1)}" height="${plotH}" fill="transparent"/>
+        <rect class="lc-hit-area" ${hitAreaAttrs} x="${(cx - colW / 2).toFixed(1)}" y="${padT}" width="${colW.toFixed(1)}" height="${plotH}" fill="#ffffff" opacity="0"/>
       </g>
     `;
   }
 
-  /* خطوط میانگین و هدف */
   let lines = '';
   if (mean > 0) {
     lines += `<line class="lc-mean" x1="${padL}" y1="${Y(mean).toFixed(1)}" x2="${W - padR}" y2="${Y(mean).toFixed(1)}"><title>میانگین: ${fmtHours(mean, s)} ساعت</title></line>`;
@@ -5185,11 +6133,10 @@ export function lineChartHTML(
     axisCaption()
   );
 }
-
 [END OF FILE: src/ui/charts/line.ts]
 
 ################################################################################
-# SECTION: Test Suite (tests/)
+# SECTION: Vitest Test Suite (tests/)
 ################################################################################
 
 ================================================================================
@@ -6355,4 +7302,3 @@ M0 ──→ M1 ──→ M2 ──→ M3 ──→ M4
 - Dexie/IndexedDB.
 
 [END OF FILE: MIGRATION.md]
-

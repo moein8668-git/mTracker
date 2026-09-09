@@ -78,16 +78,19 @@ export function viewDaily(repo: Repo): string {
         ? (e.hours >= t.targetDailyHours ? '<span class="mini-chip hit">هدف برآورده</span>' : '<span class="mini-chip under">زیر هدف</span>')
         : '<span class="mini-chip hit">ثبت شده</span>')
       : '<span class="mini-chip none">ثبت نشده</span>';
+
     html += '<div class="day-task">' +
       '<span class="dot" style="--task:' + t.color + '"></span>' +
       '<div class="d-hours' + (e ? '' : ' none') + '">' + (e ? fmtHours(e.hours, s) + ' ساعت' : 'ثبت نشده') + '</div>' +
-      '<div><div class="d-name">' + esc(t.name) + '</div>' +
-      '<div class="d-meta">' +
-      (t.targetDailyHours > 0 ? 'هدف: ' + fmtHours(t.targetDailyHours, s) + ' ساعت | ' : '') +
-      'میانگین ۳۰ روزه: ' + fmtHours(tp.mean, s) + ' | ' +
-      (st > 0 ? 'زنجیره: ' + faNum(st) + ' روز' : 'بدون زنجیره') +
-      (e && e.note ? ' | یادداشت: ' + esc(e.note) : '') +
-      '</div></div>' +
+      '<div>' +
+        '<div class="d-name">' + esc(t.name) + '</div>' +
+        '<div class="d-meta">' +
+        (t.targetDailyHours > 0 ? 'هدف: <b>' + fmtHours(t.targetDailyHours, s) + '</b> ساعت<span class="sep">|</span>' : '') +
+        'میانگین ۳۰ روزه: <b>' + fmtHours(tp.mean, s) + '</b>' +
+        (st > 0 ? '<span class="sep">|</span>زنجیره: <b>' + faNum(st) + '</b> روز' : '') +
+        (e && e.note ? '<span class="sep">|</span>یادداشت: ' + esc(e.note) : '') +
+        '</div>' +
+      '</div>' +
       chip +
       '<div class="d-actions">' +
       '<button class="btn small" data-action="quick-add" data-task="' + t.id + '" data-date="' + dIso + '" data-amount="0.5">+۳۰ دقیقه</button>' +

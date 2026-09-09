@@ -1256,4 +1256,338 @@ select.em-ctl {
 .em-hint { color: var(--accent); font-weight: 600; }
 
 
+/* جلوگیری از مسدود شدن کلیک توسط خط اصلی نمودار */
+svg path {
+  pointer-events: none;
+}
 
+/* فعال‌سازی قطعی دریافت کلیک برای نقاط */
+[data-action="open-entry"] {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+
+/* ---------- بهینه‌سازی حرفه‌ای موبایل ---------- */
+@media (max-width: 640px) {
+  :root {
+    font-size: 100%;
+  }
+
+  /* نوار بالای چسبان با بلور مات */
+  .topbar-inner {
+    padding: 10px 14px;
+    padding-top: calc(10px + env(safe-area-inset-top, 0px));
+  }
+
+  /* دکمه‌های پرایمری و ردیف‌های لمسی بزرگ */
+  .btn {
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .btn.small {
+    min-height: 36px;
+  }
+
+  /* کارت‌ها و گرید تقویم */
+  .card {
+    padding: 15px;
+    border-radius: 8px !important;
+  }
+  
+  .wall {
+    padding: 8px;
+    border-radius: 6px;
+  }
+  .wall-grid {
+    gap: 3px;
+  }
+  .wall-cell {
+    height: 48px;
+    border-radius: 4px;
+  }
+  .wall-cell b {
+    font-size: 0.72rem;
+  }
+  .wall-cell i {
+    font-size: 0.52rem;
+  }
+
+  /* تبدیل مودال‌ها به باتم‌شیت استاندارد موبایل */
+  .overlay {
+    display: flex;
+    align-items: flex-end;
+    padding: 0;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .modal {
+    width: 100%;
+    max-width: 100%;
+    max-height: 86vh;
+    border-radius: 18px 18px 0 0 !important;
+    border: 1px solid var(--line);
+    border-bottom: 0;
+    padding: 18px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+    animation: sheet-up 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .modal::before {
+    content: '';
+    display: block;
+    width: 44px;
+    height: 5px;
+    border-radius: 3px;
+    background: var(--line);
+    margin: 0 auto 16px;
+  }
+
+  /* نوار پایینی ثابت */
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    inset-inline: 0;
+    z-index: 40;
+    background: rgba(14, 17, 20, 0.88);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-top: 1px solid var(--line);
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+    justify-content: space-around;
+  }
+  .bn-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    background: transparent;
+    border: 0;
+    color: var(--muted);
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 5px 0;
+    cursor: pointer;
+    transition: color 0.15s ease, transform 0.1s ease;
+  }
+  .bn-item:active {
+    transform: scale(0.92);
+  }
+  .bn-item.active {
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .bn-item svg {
+    width: 21px;
+    height: 21px;
+  }
+
+  /* جلوگیری از زوم ناخواسته در ورودی‌های آیفون */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+
+  /* تنظیم فاصله پایین برای جلوگیری از پوشانده‌شدن محتوا توسط نوار ناوبری */
+  .wrap {
+    padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
+
+/* ---------- UI/UX Upgrade: Radial, Gauge, Scrubber & Bento ---------- */
+
+/* هیرو با حلقه رادیال و نشانگر استریک */
+.hero-card-modern {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.005) 100%), var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.hero-main { display: flex; align-items: center; gap: 20px; }
+.hero-ring-wrap { position: relative; width: 68px; height: 68px; flex: none; display: grid; place-items: center; }
+.hero-ring-svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+.hero-ring-bg { fill: none; stroke: var(--surface2); stroke-width: 6; }
+.hero-ring-val { fill: none; stroke: var(--accent); stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+.hero-ring-text { font-size: 0.8rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.hero-streak-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(224, 108, 58, 0.12); color: #e06c3a;
+  border: 1px solid rgba(224, 108, 58, 0.3); border-radius: var(--radius-s);
+  padding: 2px 8px; font-size: 0.72rem; font-weight: 700; margin-top: 4px;
+}
+
+/* دکمه‌های شیشه‌ای مدرن ثبت سریع */
+.quick-chip-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  color: var(--ink);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.quick-chip-btn:hover {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: translateY(-1px);
+}
+.quick-chip-btn:active { transform: scale(0.94); }
+
+/* گیج پایداری متریال SD در تب گزارش */
+.sd-gauge-wrap {
+  background: var(--surface2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
+  padding: 14px 18px;
+  margin: 14px 0;
+}
+.sd-gauge-track {
+  height: 8px;
+  background: #1e272e;
+  border-radius: 4px;
+  position: relative;
+  overflow: visible;
+  margin: 12px 0 6px;
+}
+.sd-zone-safe { position: absolute; left: 0; width: 50%; height: 100%; background: rgba(127, 176, 138, 0.35); border-radius: 4px 0 0 4px; }
+.sd-zone-warn { position: absolute; right: 0; width: 50%; height: 100%; background: rgba(194, 161, 77, 0.25); border-radius: 0 4px 4px 0; }
+.sd-gauge-pointer {
+  position: absolute; top: -4px; width: 4px; height: 16px; border-radius: 2px;
+  background: #fff; box-shadow: 0 0 8px rgba(255,255,255,0.8);
+  transform: translateX(-50%); transition: left 0.5s ease;
+}
+.sd-gauge-meta { display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--muted); }
+
+/* استپرهای زمان در مودال */
+.time-stepper { display: flex; gap: 6px; margin: 8px 0 12px; flex-wrap: wrap; }
+.stepper-chip {
+  flex: 1; padding: 7px 0; background: var(--surface2);
+  border: 1px solid var(--line); border-radius: var(--radius-s);
+  color: var(--ink); font-size: 0.76rem; font-weight: 600; cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.stepper-chip:hover { border-color: var(--accent); background: var(--accent-dim); }
+
+/* انیمیشن لود نرم روزهای تقویم */
+.wall-cell.animated { animation: cell-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
+
+
+/* ---------- ردیف تسک‌های روزانه (تیز، تمیز و یکپارچه با دیزاین سیستم) ---------- */
+.day-task {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  border-radius: 0;
+  transition: background 0.15s ease;
+}
+.day-task:first-child { padding-top: 6px; }
+.day-task:last-child { border-bottom: 0; padding-bottom: 6px; }
+.day-task:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.day-task .d-hours {
+  font-size: 1.25rem;
+  font-weight: 800;
+  min-width: 95px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.day-task .d-hours.none {
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+
+.day-task .d-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.4;
+}
+
+.day-task .d-meta {
+  font-size: 0.76rem;
+  color: var(--muted);
+  margin-top: 3px;
+  line-height: 1.6;
+}
+.day-task .d-meta b {
+  color: var(--ink);
+  font-weight: 600;
+}
+.day-task .d-meta .sep {
+  display: inline-block;
+  margin: 0 6px;
+  opacity: 0.3;
+}
+
+/* بج‌های وضعیت فلت و لبه‌تیز */
+.day-task .mini-chip {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 2px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.day-task .mini-chip.hit {
+  background: rgba(127, 176, 138, 0.12);
+  color: #7fb08a;
+  border-color: rgba(127, 176, 138, 0.25);
+}
+.day-task .mini-chip.under {
+  background: rgba(194, 161, 77, 0.12);
+  color: #c2a14d;
+  border-color: rgba(194, 161, 77, 0.25);
+}
+.day-task .mini-chip.none {
+  background: transparent;
+  color: var(--muted);
+  border-color: var(--line);
+}
+
+/* دکمه‌های تیز و مات با هاور نرم */
+.day-task .d-actions {
+  margin-inline-start: auto;
+  display: flex;
+  gap: 6px;
+}
+.day-task .d-actions .btn {
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.02);
+  border-color: var(--line);
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  transition: all 0.15s ease;
+}
+.day-task .d-actions .btn:hover {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.day-task .d-actions .btn.ghost {
+  background: transparent;
+  color: var(--muted);
+}
+.day-task .d-actions .btn.ghost:hover {
+  color: var(--ink);
+  border-color: var(--muted);
+}

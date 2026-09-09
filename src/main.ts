@@ -1,18 +1,28 @@
 /* Bootstrap: theme pre-applied inline in index.html; here we wire repo + events. */
+
 import './styles.css';
+
 import { Storage, Repo } from './storage';
+
 import { state, parseTabId } from './ui/state';
+
 import { render } from './ui/render';
+
 import { attachEvents } from './ui/events';
+
 import { toast } from './ui/bits';
+
 import { overallMonthAnalysis } from './analysis';
+
 import { monthStartOf } from './jalali';
 
 const repo = new Repo(Storage.load(), msg => toast(msg));
+
 try {
   state.tab = parseTabId(localStorage.getItem('mtracker.tab'));
   state.chartType = localStorage.getItem('mtracker.chart') === 'line' ? 'line' : 'bar';
 } catch { /* private mode: stay on today */ }
+
 attachEvents(repo);
 render(repo);
 
@@ -58,7 +68,8 @@ try {
   let w = window.innerWidth;
   let h = window.innerHeight;
 
-  const GRID_STEP = 19; // گام متراکم، دقیق و مینیاتوری
+  let isMobile = w <= 640;
+  let GRID_STEP = isMobile ? 26 : 19;
   let cols = 0;
   let rows = 0;
 
@@ -104,6 +115,8 @@ try {
   function buildLattice() {
     nodes = [];
     gridMatrix = [];
+    isMobile = w <= 640;
+    GRID_STEP = isMobile ? 26 : 19;
     cols = Math.floor(w / GRID_STEP) + 2;
     rows = Math.floor(h / GRID_STEP) + 2;
     const startX = (w - (cols - 1) * GRID_STEP) / 2;
@@ -217,27 +230,28 @@ try {
     mouse.active = false;
   });
 
-  // انفجار فوتونی دو مرحله‌ای با ضربه شرودینگر
+  // انفجار فوتونی دو مرحله‌ای با ضربه شرودینگر (بهینه‌سازی شده برای لمس موبایل)
   window.addEventListener('pointerdown', (e) => {
     shockwaves.push({
       x: e.clientX,
       y: e.clientY,
       radius: 3,
-      energy: 26,
-      implosionTimer: 5,
+      energy: isMobile ? 18 : 26,
+      implosionTimer: isMobile ? 3 : 5,
       interferencePhase: Math.random() * Math.PI * 2
     });
 
+    const triggerRadius = isMobile ? 100 : 150;
     for (let i = 0; i < nodes.length; i++) {
       const node = nodes[i]!;
       const dx = e.clientX - node.x;
       const dy = e.clientY - node.y;
       const d = Math.hypot(dx, dy);
-      if (d < 150 && d > 1) {
-        const implode = Math.pow((150 - d) / 150, 2.2) * 9.2;
+      if (d < triggerRadius && d > 1) {
+        const implode = Math.pow((triggerRadius - d) / triggerRadius, 2.2) * (isMobile ? 6.5 : 9.2);
         node.vx += (dx / d) * implode;
         node.vy += (dy / d) * implode;
-        node.phosphor = Math.min(1, node.phosphor + (1 - d / 150) * 0.8);
+        node.phosphor = Math.min(1, node.phosphor + (1 - d / triggerRadius) * 0.8);
       }
     }
   });
@@ -356,7 +370,7 @@ try {
           }
         }
 
-        // موج شوک برهم‌کنش کلیک
+        // موج شوک برهم‌کنش کلیک / لمس
         for (let s = 0; s < shockwaves.length; s++) {
           const sw = shockwaves[s]!;
           if (sw.implosionTimer <= 0) {

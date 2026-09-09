@@ -7,3 +7,7 @@ __pycache__/
 
 # Pomodorus proxy worker (private, user-deployed) — never commit
 proxy-worker/
+
+# Bun lockfiles (project runs via npm)
+bun.lock
+bun.lockb
