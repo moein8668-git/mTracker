@@ -124,16 +124,17 @@ export function lineChartHTML(
 ): string {
   const n = days.length;
   if (!n) return '<div class="chart-empty">داده‌ای برای نمایش نیست</div>';
-  const { mean = 0, target = 0, h = 190 } = opts;
+  const { mean = 0, target = 0, h = 220 } = opts;
   const rtl = s.chartDir === 'rtl';
 
-  const W = 700;
-  const H = Math.max(h, 190);
+  // ابعاد پایه SVG
+  const W = Math.max(680, n * 24);
+  const H = Math.max(h, 220);
 
-  const padL = rtl ? 35 : 75;
-  const padR = rtl ? 75 : 35;
+  const padL = rtl ? 35 : 65;
+  const padR = rtl ? 65 : 35;
   const padT = 24;
-  const padB = 38;
+  const padB = 40;
 
   const plotW = W - padR - padL;
   const plotH = H - padT - padB;
@@ -147,7 +148,7 @@ export function lineChartHTML(
   }
   const maxV = peak * 1.22;
 
-  const insetX = 24;
+  const insetX = 20;
   const step = n > 1 ? (plotW - 2 * insetX) / (n - 1) : 0;
 
   const X = (i: number) => {
@@ -157,7 +158,7 @@ export function lineChartHTML(
   const Y = (v: number) => padT + (1 - v / maxV) * plotH;
 
   /* محور عمودی Y */
-  const yLabX = rtl ? W - padR + 14 : padL - 14;
+  const yLabX = rtl ? W - padR + 12 : padL - 12;
   const yLabAnchor = rtl ? 'start' : 'end';
 
   let grid = '';
@@ -186,7 +187,7 @@ export function lineChartHTML(
     const x = X(i).toFixed(1);
     ticks +=
       '<line class="lc-axis" x1="' + x + '" y1="' + yBase + '" x2="' + x + '" y2="' + (yBase + 5) + '"/>' +
-      '<text class="lc-xlab" x="' + x + '" y="' + (yBase + 20) + '" text-anchor="middle">' +
+      '<text class="lc-xlab" x="' + x + '" y="' + (yBase + 22) + '" text-anchor="middle">' +
       (n > 10 ? faNum(j.jd) : esc(jShortLabel(days[i]!.date))) +
       '</text>';
   }
@@ -201,6 +202,25 @@ export function lineChartHTML(
 
   const styles = `
     <style>
+      .lc-scroll-wrap {
+        width: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 6px;
+      }
+      .linechart {
+        min-width: 580px;
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      .lc-grid { stroke: rgba(255, 255, 255, 0.08); stroke-width: 1; stroke-dasharray: 4,4; }
+      .lc-base { stroke: rgba(255, 255, 255, 0.15); stroke-width: 1; }
+      .lc-axis { stroke: rgba(255, 255, 255, 0.2); stroke-width: 1; }
+      .lc-ylab, .lc-xlab { font-size: 11px; fill: rgba(255, 255, 255, 0.45); font-family: inherit; }
+      .lc-mean { stroke: #e3b341; stroke-dasharray: 4,4; stroke-width: 1.2; opacity: 0.75; }
+      .lc-target { stroke: #2ea043; stroke-dasharray: 4,4; stroke-width: 1.2; opacity: 0.75; }
       .lc-line { transition: opacity 0.2s ease, stroke-width 0.2s ease; pointer-events: none; }
       .linechart:hover .lc-line { opacity: 0.25; }
       .linechart .lc-line:hover { opacity: 1 !important; stroke-width: 2.8px !important; }
@@ -230,7 +250,7 @@ export function lineChartHTML(
       const gid = 'hero-grad-' + seq;
       defs += `
         <linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="${totalSer.color}" stop-opacity="0.16"/>
+          <stop offset="0%" stop-color="${totalSer.color}" stop-opacity="0.18"/>
           <stop offset="100%" stop-color="${totalSer.color}" stop-opacity="0.0"/>
         </linearGradient>
       `;
@@ -253,7 +273,6 @@ export function lineChartHTML(
     `;
   });
 
-  // استخراج taskId تسک (دقیقاً مشابه نمودار میله‌ای)
   const currentTaskId =
     opts.taskId ||
     (series.length === 1 && series[0]?.taskId ? series[0].taskId : (series.find(sr => sr.taskId && !sr.total)?.taskId || null));
@@ -287,7 +306,6 @@ export function lineChartHTML(
       tip += 'بدون ثبت کارکرد';
     }
 
-    // هماهنگی دقیق با ساختار attrs در bars.ts
     const clickAttrs = currentTaskId
       ? `class="lc-day-col clickable" data-action="edit-day" data-task="${esc(currentTaskId)}" data-date="${safeDate}" data-hover-day="${safeDate}"`
       : `class="lc-day-col" data-hover-day="${safeDate}"`;
@@ -317,8 +335,9 @@ export function lineChartHTML(
   const legendItems = series.map(sr => ({ name: sr.name, color: sr.color }));
 
   return (
-    `<svg class="linechart" viewBox="0 0 ${W} ${H}" style="direction:ltr;overflow:visible;" preserveAspectRatio="xMidYMid meet" role="img">` +
     styles +
+    `<div class="lc-scroll-wrap">` +
+    `<svg class="linechart" viewBox="0 0 ${W} ${H}" style="direction:ltr;overflow:visible;" preserveAspectRatio="xMidYMid meet" role="img">` +
     (defs ? `<defs>${defs}</defs>` : '') +
     grid +
     areas +
@@ -327,6 +346,7 @@ export function lineChartHTML(
     ticks +
     interaction +
     `</svg>` +
+    `</div>` +
     legendHTML(legendItems) +
     linesLegend(mean, target, s) +
     axisCaption()
