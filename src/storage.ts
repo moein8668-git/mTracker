@@ -61,7 +61,7 @@ export interface ToastFn { (msg: string): void; }
 export class Repo {
   db: DBData;
   private warn: ToastFn;
-
+  version = 0;
   constructor(db: DBData | null, warn: ToastFn) {
     this.db = db ?? emptyDb();
     this.warn = warn;
@@ -79,6 +79,7 @@ export class Repo {
   }
 
   persist(): void {
+    this.version++;
     Storage.save(this.db, this.warn);
   }
 

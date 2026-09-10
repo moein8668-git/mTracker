@@ -38,28 +38,48 @@ export function scheduleSummary(task: Task): string {
   return faNum(d) + ' روز در هفته';
 }
 
+const ANALYSIS_CACHE = new Map<string, AnalyzeResult>();
+const NUM_CACHE = new Map<string, number>();
+
 export function taskPeriodAnalysis(repo: Repo, task: Task, startIso: string, endIso: string): AnalyzeResult {
   const s = periodStartFor(repo, task, startIso);
   const e = endIso < todayIso() ? endIso : todayIso();
-  if (s > e) return { ...EMPTY_RESULT, startIso: s, endIso: e };
-  return {
+  const key = `tpa_${repo.version}_${task.id}_${s}_${e}`;
+  const hit = ANALYSIS_CACHE.get(key);
+  if (hit) return hit;
+
+  let res: AnalyzeResult;
+  if (s > e) res = { ...EMPTY_RESULT, startIso: s, endIso: e };
+  else res = {
     ...analyze({ startIso: s, endIso: e, entries: repo.entriesForTask(task.id), target: task.targetDailyHours, daysPerWeek: task.daysPerWeek }),
     startIso: s, endIso: e
   };
+  if (ANALYSIS_CACHE.size > 800) ANALYSIS_CACHE.clear();
+  ANALYSIS_CACHE.set(key, res);
+  return res;
 }
 
 export function taskWeekAnalysis(repo: Repo, task: Task): AnalyzeResult | null {
   const endIso = todayIso();
   const startIso = periodStartFor(repo, task, isoOf(addDays(new Date(), -6)));
   if (startIso > endIso) return null;
-  return analyze({ startIso, endIso, entries: repo.entriesForTask(task.id), target: task.targetDailyHours, daysPerWeek: task.daysPerWeek });
+  const key = `twa_${repo.version}_${task.id}_${startIso}_${endIso}`;
+  const hit = ANALYSIS_CACHE.get(key);
+  if (hit) return hit;
+
+  const res = analyze({ startIso, endIso, entries: repo.entriesForTask(task.id), target: task.targetDailyHours, daysPerWeek: task.daysPerWeek });
+  if (ANALYSIS_CACHE.size > 800) ANALYSIS_CACHE.clear();
+  ANALYSIS_CACHE.set(key, res);
+  return res;
 }
 
 export function overallPeriodAnalysis(repo: Repo, startIso: string, endIso: string): AnalyzeResult {
   const e = endIso < todayIso() ? endIso : todayIso();
+  const key = `opa_${repo.version}_${startIso}_${e}`;
+  const hit = ANALYSIS_CACHE.get(key);
+  if (hit) return hit;
+
   let s = startIso;
-  /* overall window starts where the data starts: earliest entry across all
-     tasks (imports backfill), falling back to earliest task creation */
   const entryStart = repo.entries.reduce<string | null>((min, e) => (!min || e.date < min ? e.date : min), null);
   let earliest: string | null = entryStart;
   if (!earliest) {
@@ -69,8 +89,13 @@ export function overallPeriodAnalysis(repo: Repo, startIso: string, endIso: stri
     earliest = created.length ? created.reduce((a, b) => (a < b ? a : b)) : null;
   }
   if (earliest && earliest > s) s = earliest;
-  if (s > e) return { ...EMPTY_RESULT };
-  return analyze({ startIso: s, endIso: e, entries: repo.entries, target: 0 });
+  let res: AnalyzeResult;
+  if (s > e) res = { ...EMPTY_RESULT };
+  else res = analyze({ startIso: s, endIso: e, entries: repo.entries, target: 0 });
+
+  if (ANALYSIS_CACHE.size > 800) ANALYSIS_CACHE.clear();
+  ANALYSIS_CACHE.set(key, res);
+  return res;
 }
 
 export function overallMonthAnalysis(repo: Repo, ms: Date): AnalyzeResult {
@@ -79,21 +104,34 @@ export function overallMonthAnalysis(repo: Repo, ms: Date): AnalyzeResult {
 }
 
 export function streakOf(repo: Repo, taskId: string, endDateIso: string): number {
+  const key = `str_${repo.version}_${taskId}_${endDateIso}`;
+  const hit = NUM_CACHE.get(key);
+  if (hit !== undefined) return hit;
+
   const set = new Set(repo.entriesForTask(taskId).filter(e => e.hours > 0).map(e => e.date));
   let s = 0, d = isoToDate(endDateIso), guard = 0;
   while (set.has(isoOf(d)) && guard++ < 3650) {
     s++;
     d = addDays(d, -1);
   }
+  if (NUM_CACHE.size > 800) NUM_CACHE.clear();
+  NUM_CACHE.set(key, s);
   return s;
 }
 
 export function overallRollingMean(repo: Repo, days: number, endIso: string): number {
-  return analyze({
+  const key = `orm_${repo.version}_${days}_${endIso}`;
+  const hit = NUM_CACHE.get(key);
+  if (hit !== undefined) return hit;
+
+  const res = analyze({
     startIso: isoOf(addDays(isoToDate(endIso), -(days - 1))),
     endIso,
     entries: repo.entries,
     target: 0
   }).mean;
+  if (NUM_CACHE.size > 800) NUM_CACHE.clear();
+  NUM_CACHE.set(key, res);
+  return res;
 }
 

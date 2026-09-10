@@ -15,8 +15,8 @@ import { wallHTML } from '../wall';
 function kindSeg(): string {
   const k = state.period.kind;
   const b = (id: string, label: string) =>
-    '<button data-action="set-period" data-kind="' + id + '" class="seg-pill' + (k === id ? ' active' : '') + '" style="margin:0; padding:7px 14px; font-size:0.82rem; border-radius:4px; outline:none; cursor:pointer; line-height:1; display:inline-flex; align-items:center; justify-content:center;">' + label + '</button>';
-  return '<div class="seg-pills" style="display:inline-flex; align-items:center; gap:4px;">' + 
+    '<button data-action="set-period" data-kind="' + id + '" class="seg-pill' + (k === id ? ' active' : '') + '">' + label + '</button>';
+  return '<div class="seg-pills rb-kind-pills">' + 
     b('month', 'ماه شمسی') + b('rolling', 'روزهای اخیر') + b('custom', 'بازه دلخواه') + 
   '</div>';
 }
@@ -24,14 +24,14 @@ function kindSeg(): string {
 function chartTypeSeg(): string {
   const isLine = state.chartType === 'line';
   const b = (chart: string, label: string, active: boolean) =>
-    '<button data-action="set-chart" data-chart="' + chart + '" class="seg-pill' + (active ? ' active' : '') + '" style="margin:0; padding:7px 14px; font-size:0.82rem; border-radius:4px; outline:none; cursor:pointer; line-height:1; display:inline-flex; align-items:center; justify-content:center;">' + label + '</button>';
-  return '<div class="seg-pills" style="display:inline-flex; align-items:center; gap:4px;">' + 
+    '<button data-action="set-chart" data-chart="' + chart + '" class="seg-pill' + (active ? ' active' : '') + '">' + label + '</button>';
+  return '<div class="seg-pills rb-chart-pills">' + 
     b('bar', 'میله‌ای', !isLine) + b('line', 'خطی', isLine) + 
   '</div>';
 }
 
 function rcalMarkup(): string {
-  return '<div class="rcal" id="report-cal" style="display:none; position:absolute; top:calc(100% + 8px); left:0; z-index:60; border-radius:4px;">' +
+  return '<div class="rcal" id="report-cal" style="display:none; border-radius:4px;">' +
     '<div class="ecal-head-row">' +
     '<button type="button" class="btn small ghost" data-action="rcal-prev" style="border-radius:4px;">ماه قبل</button>' +
     '<div class="ecal-title" id="report-cal-title"></div>' +
@@ -45,21 +45,16 @@ function rcalMarkup(): string {
 function periodNav(p: ResolvedPeriod): string {
   const kind = state.period.kind;
   if (kind === 'month') {
-    return '<div class="rb-nav" style="display:inline-flex; align-items:center; gap:6px;">' +
-      '<button class="btn small ghost" data-action="month-prev" style="margin:0; padding:6px 12px; font-size:0.82rem; border-radius:4px; outline:none; line-height:1; display:inline-flex; align-items:center;">‹ قبل</button>' +
-      '<button class="btn small ghost" data-action="month-next"' + (p.isCurrent ? ' disabled' : '') + ' style="margin:0; padding:6px 12px; font-size:0.82rem; border-radius:4px; outline:none; line-height:1; display:inline-flex; align-items:center;">بعد ›</button>' +
+    return '<div class="rb-nav rb-month-nav">' +
+      '<button class="btn small ghost" data-action="month-prev">‹ ماه قبل</button>' +
+      '<button class="btn small ghost" data-action="month-next"' + (p.isCurrent ? ' disabled' : '') + '>ماه بعد ›</button>' +
       '</div>';
   }
   if (kind === 'rolling') {
-    return '<div class="rb-nav seg-pills" style="display:inline-flex; align-items:center; height:34px; box-sizing:border-box; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:4px; padding:2px; gap:2px;">' + 
+    return '<div class="rb-nav seg-pills rb-rolling-pills">' + 
       [7, 14, 30, 90].map(d => {
         const isActive = state.period.rollingDays === d;
-        return '<button data-action="set-rolling" data-days="' + d + '" class="seg-pill small' + (isActive ? ' active' : '') + '" style="' +
-          'box-sizing:border-box; margin:0; height:100%; display:inline-flex; align-items:center; justify-content:center; padding:0 12px; font-size:0.82rem; font-family:inherit; line-height:1; vertical-align:middle; border-radius:3px; border:none; outline:none; cursor:pointer; ' +
-          (isActive 
-            ? 'background:rgba(56, 189, 248, 0.2); color:#38bdf8; font-weight:700;' 
-            : 'background:transparent; color:rgba(255,255,255,0.65); font-weight:normal;') +
-        '">' + faNum(d) + ' روز</button>';
+        return '<button data-action="set-rolling" data-days="' + d + '" class="seg-pill small' + (isActive ? ' active' : '') + '">' + faNum(d) + ' روز</button>';
       }).join('') + 
     '</div>';
   }
@@ -67,14 +62,14 @@ function periodNav(p: ResolvedPeriod): string {
   const fromIso = state.period.from || isoOf(new Date(Date.now() - 13 * 864e5));
   const toIso = state.period.to || todayIso();
 
-  return '<div class="rb-nav range-wrap" style="position:relative; display:inline-flex; align-items:center; gap:8px;">' +
-    '<button type="button" class="date-btn small-date" data-action="rcal-toggle" data-field="from" style="margin:0; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.09); border-radius:4px; color:inherit; outline:none; cursor:pointer; height:32px; padding:0 12px; font-size:0.82rem; line-height:1; display:inline-flex; align-items:center; gap:6px;">' +
-      '<span style="opacity:0.45; font-size:0.75rem;">از</span>' +
-      '<b style="color:var(--accent, #38bdf8);">' + jShortLabel(fromIso) + '</b>' +
+  return '<div class="rb-nav range-wrap">' +
+    '<button type="button" class="date-btn small-date" data-action="rcal-toggle" data-field="from">' +
+      '<span class="date-lbl">از</span>' +
+      '<b class="date-val">' + jShortLabel(fromIso) + '</b>' +
     '</button>' +
-    '<span style="opacity:0.3; font-size:0.8rem; user-select:none;">تا</span>' +
-    '<button type="button" class="date-btn small-date" data-action="rcal-toggle" data-field="to" style="margin:0; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.09); border-radius:4px; color:inherit; outline:none; cursor:pointer; height:32px; padding:0 12px; font-size:0.82rem; line-height:1; display:inline-flex; align-items:center; gap:6px;">' +
-      '<b style="color:var(--accent, #38bdf8);">' + jShortLabel(toIso) + '</b>' +
+    '<span class="range-sep">تا</span>' +
+    '<button type="button" class="date-btn small-date" data-action="rcal-toggle" data-field="to">' +
+      '<b class="date-val">' + jShortLabel(toIso) + '</b>' +
     '</button>' +
     rcalMarkup() +
   '</div>';
@@ -153,15 +148,15 @@ export function viewReport(repo: Repo): string {
   const p = resolvePeriod(repo, periodState);
   const tasks = repo.activeTasks();
 
-  const htmlHeader = '<section class="card report-bar" style="padding:22px 26px; margin-bottom:24px; border-radius:4px; display:flex; flex-direction:column; gap:18px;">' +
-    '<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">' +
-      '<div style="display:flex; align-items:baseline; gap:12px;">' +
-        '<h2 style="margin:0; font-size:1.35rem; font-weight:800; letter-spacing:-0.02em;">' + p.title + '</h2>' +
-        (p.sub ? '<span style="font-size:0.85rem; opacity:0.65;">• ' + p.sub + '</span>' : '') +
+  const htmlHeader = '<section class="card report-bar">' +
+    '<div class="rb-top-row">' +
+      '<div class="rb-title-group">' +
+        '<h2 class="rb-title">' + p.title + '</h2>' +
+        (p.sub ? '<span class="rb-sub">• ' + p.sub + '</span>' : '') +
       '</div>' +
-      '<div>' + periodNav(p) + '</div>' +
+      '<div class="rb-nav-wrap">' + periodNav(p) + '</div>' +
     '</div>' +
-    '<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; padding-top:14px; border-top:1px solid rgba(255,255,255,0.06);">' +
+    '<div class="rb-controls-row">' +
       kindSeg() +
       chartTypeSeg() +
     '</div>' +

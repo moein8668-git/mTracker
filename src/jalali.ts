@@ -27,14 +27,23 @@ const J_FMT = new Intl.DateTimeFormat('en-US-u-ca-persian', { year: 'numeric', m
 
 export interface JalaliDate { jy: number; jm: number; jd: number; }
 
+const TO_J_CACHE = new Map<number, JalaliDate>();
+
 export function toJ(date: Date): JalaliDate {
+  const key = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate();
+  const hit = TO_J_CACHE.get(key);
+  if (hit) return hit;
+
   const o: Record<string, string> = {};
   for (const p of J_FMT.formatToParts(date)) o[p.type] = p.value;
-  return { jy: +o['year']!, jm: +o['month']!, jd: +o['day']! };
+  const res: JalaliDate = { jy: +o['year']!, jm: +o['month']!, jd: +o['day']! };
+  if (TO_J_CACHE.size > 2000) TO_J_CACHE.clear();
+  TO_J_CACHE.set(key, res);
+  return res;
 }
 
 export const J_MONTHS = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
-export const WEEKDAYS = ['یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه', 'شنبه'];
+export const WEEKDAYS = ['یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه', 'شنبه'];
 
 export const weekdayName = (iso: string): string => WEEKDAYS[isoToDate(iso).getDay()]!;
 
@@ -61,7 +70,7 @@ export function monthMeta(ms: Date): MonthMeta {
 
 export function jLabel(ms: Date): string {
   const { jy, jm } = toJ(ms);
-  return J_MONTHS[jm - 1]! + ' ' + FA_NUM_FMT.format(jy);
+  return J_MONTHS[jm - 1]! + ' ' + FA_YEAR_FMT.format(jy);
 }
 
 export function jDayLabel(iso: string): string {
@@ -75,3 +84,11 @@ export function jShortLabel(iso: string): string {
 }
 
 const FA_NUM_FMT = new Intl.NumberFormat('fa-IR');
+const FA_YEAR_FMT = new Intl.NumberFormat('fa-IR', { useGrouping: false });
+
+export function formatPersianFull(date: Date): string {
+  const { jy, jm, jd } = toJ(date);
+  const weekday = WEEKDAYS[date.getDay()]!;
+  const month = J_MONTHS[jm - 1]!;
+  return `${weekday}، ${FA_NUM_FMT.format(jd)} ${month} ${FA_YEAR_FMT.format(jy)}`;
+}

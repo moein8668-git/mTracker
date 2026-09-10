@@ -166,7 +166,10 @@ try {
     buildLattice();
   }
   resize();
-  window.addEventListener('resize', resize, { passive: true });
+  window.addEventListener('resize', () => {
+    resize();
+    wakeAnimation();
+  }, { passive: true });
 
   const mouse = {
     x: -3000,
@@ -196,6 +199,7 @@ try {
 
   document.addEventListener('visibilitychange', () => {
     isPageVisible = !document.hidden;
+    if (isPageVisible) wakeAnimation();
   });
 
   let cardUpdateQueued = false;
@@ -203,35 +207,55 @@ try {
     mouse.targetX = e.clientX;
     mouse.targetY = e.clientY;
     mouse.active = true;
+    wakeAnimation();
 
-    if (!cardUpdateQueued) {
+    if (e.pointerType !== 'touch' && !cardUpdateQueued) {
       cardUpdateQueued = true;
       requestAnimationFrame(() => {
-        const cards = document.querySelectorAll<HTMLElement>('.card');
-        for (let i = 0; i < cards.length; i++) {
-          const card = cards[i]!;
+        const target = document.elementFromPoint(e.clientX, e.clientY);
+        const card = target?.closest<HTMLElement>('.card');
+        if (card) {
           const rect = card.getBoundingClientRect();
-          if (
-            e.clientX >= rect.left - 60 &&
-            e.clientX <= rect.right + 60 &&
-            e.clientY >= rect.top - 60 &&
-            e.clientY <= rect.bottom + 60
-          ) {
-            card.style.setProperty('--card-mx', `${e.clientX - rect.left}px`);
-            card.style.setProperty('--card-my', `${e.clientY - rect.top}px`);
-          }
+          card.style.setProperty('--card-mx', `${e.clientX - rect.left}px`);
+          card.style.setProperty('--card-my', `${e.clientY - rect.top}px`);
         }
         cardUpdateQueued = false;
       });
     }
   }, { passive: true });
+  const releasePointer = () => {
+    mouse.active = false;
+    mouse.targetX = -3000;
+    mouse.targetY = -3000;
+    wakeAnimation();
+  };
 
   window.addEventListener('pointerleave', () => {
     mouse.active = false;
+    wakeAnimation();
   });
+
+  window.addEventListener('pointerup', (e) => {
+    if (e.pointerType === 'touch' || e.pointerType === 'pen') {
+      releasePointer();
+    }
+  }, { passive: true });
+
+  window.addEventListener('pointercancel', () => {
+    releasePointer();
+  }, { passive: true });
+
+  window.addEventListener('touchend', () => {
+    releasePointer();
+  }, { passive: true });
+
+  window.addEventListener('touchcancel', () => {
+    releasePointer();
+  }, { passive: true });
 
   // انفجار فوتونی دو مرحله‌ای با ضربه شرودینگر (بهینه‌سازی شده برای لمس موبایل)
   window.addEventListener('pointerdown', (e) => {
+    wakeAnimation();
     shockwaves.push({
       x: e.clientX,
       y: e.clientY,
@@ -263,13 +287,43 @@ try {
   const DAMPING = 0.865;
   const DISPERSAL_LIMIT = 15;
   const INTERACTION_CUTOFF = 78;
+  let isRunning = false;
+  let settleFrames = 0;
+  let stateRgb: [number, number, number] = [79, 163, 163];
+  let lastStatsTime = 0;
+
+  function refreshStateRgb() {
+    try {
+      const monthStats = overallMonthAnalysis(repo, monthStartOf(new Date()));
+      stateRgb = monthStats.status === 'ok' ? [127, 176, 138] : (monthStats.status === 'volatile' ? [194, 161, 77] : [79, 163, 163]);
+    } catch {
+      stateRgb = [79, 163, 163];
+    }
+  }
+  refreshStateRgb();
+
+  function wakeAnimation() {
+    settleFrames = 0;
+    if (!isRunning && isPageVisible) {
+      isRunning = true;
+      requestAnimationFrame(draw);
+    }
+  }
 
   function draw() {
-    requestAnimationFrame(draw);
-    if (!ctx || !isPageVisible) return;
+    if (!ctx || !isPageVisible) {
+      isRunning = false;
+      return;
+    }
 
     ctx.clearRect(0, 0, w, h);
     tick += 0.016;
+
+    const now = performance.now();
+    if (now - lastStatsTime > 2500) {
+      lastStatsTime = now;
+      refreshStateRgb();
+    }
 
     mouse.vx = mouse.targetX - mouse.prevX;
     mouse.vy = mouse.targetY - mouse.prevY;
@@ -303,9 +357,7 @@ try {
       }
     }
 
-    const monthStats = overallMonthAnalysis(repo, monthStartOf(new Date()));
-    const stateRgb = monthStats.status === 'ok' ? [127, 176, 138] : (monthStats.status === 'volatile' ? [194, 161, 77] : [79, 163, 163]);
-
+    let totalKinetic = 0;
     const activeNodes: PhononNode[] = [];
 
     // ۱. دینامیک شبکه فونونی و محاسبات تنش تانسوری
@@ -407,10 +459,9 @@ try {
 
         // استهلاک نمایی فسفرسانس
         node.phosphor *= 0.955;
-
-        // تانسور تنش موضعی
         const speed = Math.hypot(node.vx, node.vy);
         const distOrig = Math.hypot(node.x - node.ox, node.y - node.oy);
+        totalKinetic += speed + distOrig + node.phosphor;
         node.strain = Math.min(1, (distOrig / DISPERSAL_LIMIT) * 0.72 + (speed / 3.0) * 0.28);
 
         if (node.strain > 0.07 || node.phosphor > 0.1) {
@@ -435,23 +486,26 @@ try {
         ctx.fill();
       }
     }
-
     // ۲. تارهای الاستیک فوتونی بین گره‌های برانگیخته
+    const maxThreadDist = GRID_STEP * 1.45;
+    const maxDistSq = maxThreadDist * maxThreadDist;
     ctx.lineWidth = 0.65;
     for (let i = 0; i < activeNodes.length; i++) {
       const p1 = activeNodes[i]!;
       for (let j = i + 1; j < activeNodes.length; j++) {
         const p2 = activeNodes[j]!;
         const dx = p1.x - p2.x;
+        if (Math.abs(dx) > maxThreadDist) continue;
         const dy = p1.y - p2.y;
-        const d = Math.hypot(dx, dy);
-
-        if (d < GRID_STEP * 1.45) {
+        if (Math.abs(dy) > maxThreadDist) continue;
+        const dSq = dx * dx + dy * dy;
+        if (dSq < maxDistSq) {
+          const d = Math.sqrt(dSq);
           const avgGlow = Math.max(
             (p1.strain + p2.strain) * 0.5,
             (p1.phosphor + p2.phosphor) * 0.5
           );
-          const alpha = (1 - (d / (GRID_STEP * 1.45))) * avgGlow * 0.42;
+          const alpha = (1 - (d / maxThreadDist)) * avgGlow * 0.42;
 
           ctx.beginPath();
           ctx.moveTo(p1.x, p1.y);
@@ -463,9 +517,32 @@ try {
         }
       }
     }
+
+    const isQuiet = shockwaves.length === 0 && !mouse.active && mouse.hoverScalar < 0.005 && activeNodes.length === 0 && totalKinetic < 1.0;
+    if (isQuiet) {
+      settleFrames++;
+    } else {
+      settleFrames = 0;
+    }
+
+    if (settleFrames > 25) {
+      for (let i = 0; i < nodes.length; i++) {
+        const n = nodes[i]!;
+        n.x = n.ox;
+        n.y = n.oy;
+        n.vx = 0;
+        n.vy = 0;
+        n.phosphor = 0;
+        n.strain = 0;
+      }
+      isRunning = false;
+      return;
+    }
+
+    requestAnimationFrame(draw);
   }
 
-  requestAnimationFrame(draw);
+  wakeAnimation();
 })();
 
 export { state };
