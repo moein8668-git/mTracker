@@ -1,18 +1,28 @@
 /* Bootstrap: theme pre-applied inline in index.html; here we wire repo + events. */
+
 import './styles.css';
+
 import { Storage, Repo } from './storage';
+
 import { state, parseTabId } from './ui/state';
+
 import { render } from './ui/render';
+
 import { attachEvents } from './ui/events';
+
 import { toast } from './ui/bits';
+
 import { overallMonthAnalysis } from './analysis';
+
 import { monthStartOf } from './jalali';
 
 const repo = new Repo(Storage.load(), msg => toast(msg));
+
 try {
   state.tab = parseTabId(localStorage.getItem('mtracker.tab'));
   state.chartType = localStorage.getItem('mtracker.chart') === 'line' ? 'line' : 'bar';
 } catch { /* private mode: stay on today */ }
+
 attachEvents(repo);
 render(repo);
 
@@ -58,7 +68,8 @@ try {
   let w = window.innerWidth;
   let h = window.innerHeight;
 
-  const GRID_STEP = 19; // گام متراکم، دقیق و مینیاتوری
+  let isMobile = w <= 640;
+  let GRID_STEP = isMobile ? 26 : 19;
   let cols = 0;
   let rows = 0;
 
@@ -104,6 +115,8 @@ try {
   function buildLattice() {
     nodes = [];
     gridMatrix = [];
+    isMobile = w <= 640;
+    GRID_STEP = isMobile ? 26 : 19;
     cols = Math.floor(w / GRID_STEP) + 2;
     rows = Math.floor(h / GRID_STEP) + 2;
     const startX = (w - (cols - 1) * GRID_STEP) / 2;
@@ -153,7 +166,10 @@ try {
     buildLattice();
   }
   resize();
-  window.addEventListener('resize', resize, { passive: true });
+  window.addEventListener('resize', () => {
+    resize();
+    wakeAnimation();
+  }, { passive: true });
 
   const mouse = {
     x: -3000,
@@ -183,6 +199,7 @@ try {
 
   document.addEventListener('visibilitychange', () => {
     isPageVisible = !document.hidden;
+    if (isPageVisible) wakeAnimation();
   });
 
   let cardUpdateQueued = false;
@@ -190,54 +207,75 @@ try {
     mouse.targetX = e.clientX;
     mouse.targetY = e.clientY;
     mouse.active = true;
+    wakeAnimation();
 
-    if (!cardUpdateQueued) {
+    if (e.pointerType !== 'touch' && !cardUpdateQueued) {
       cardUpdateQueued = true;
       requestAnimationFrame(() => {
-        const cards = document.querySelectorAll<HTMLElement>('.card');
-        for (let i = 0; i < cards.length; i++) {
-          const card = cards[i]!;
+        const target = document.elementFromPoint(e.clientX, e.clientY);
+        const card = target?.closest<HTMLElement>('.card');
+        if (card) {
           const rect = card.getBoundingClientRect();
-          if (
-            e.clientX >= rect.left - 60 &&
-            e.clientX <= rect.right + 60 &&
-            e.clientY >= rect.top - 60 &&
-            e.clientY <= rect.bottom + 60
-          ) {
-            card.style.setProperty('--card-mx', `${e.clientX - rect.left}px`);
-            card.style.setProperty('--card-my', `${e.clientY - rect.top}px`);
-          }
+          card.style.setProperty('--card-mx', `${e.clientX - rect.left}px`);
+          card.style.setProperty('--card-my', `${e.clientY - rect.top}px`);
         }
         cardUpdateQueued = false;
       });
     }
   }, { passive: true });
+  const releasePointer = () => {
+    mouse.active = false;
+    mouse.targetX = -3000;
+    mouse.targetY = -3000;
+    wakeAnimation();
+  };
 
   window.addEventListener('pointerleave', () => {
     mouse.active = false;
+    wakeAnimation();
   });
 
-  // انفجار فوتونی دو مرحله‌ای با ضربه شرودینگر
+  window.addEventListener('pointerup', (e) => {
+    if (e.pointerType === 'touch' || e.pointerType === 'pen') {
+      releasePointer();
+    }
+  }, { passive: true });
+
+  window.addEventListener('pointercancel', () => {
+    releasePointer();
+  }, { passive: true });
+
+  window.addEventListener('touchend', () => {
+    releasePointer();
+  }, { passive: true });
+
+  window.addEventListener('touchcancel', () => {
+    releasePointer();
+  }, { passive: true });
+
+  // انفجار فوتونی دو مرحله‌ای با ضربه شرودینگر (بهینه‌سازی شده برای لمس موبایل)
   window.addEventListener('pointerdown', (e) => {
+    wakeAnimation();
     shockwaves.push({
       x: e.clientX,
       y: e.clientY,
       radius: 3,
-      energy: 26,
-      implosionTimer: 5,
+      energy: isMobile ? 18 : 26,
+      implosionTimer: isMobile ? 3 : 5,
       interferencePhase: Math.random() * Math.PI * 2
     });
 
+    const triggerRadius = isMobile ? 100 : 150;
     for (let i = 0; i < nodes.length; i++) {
       const node = nodes[i]!;
       const dx = e.clientX - node.x;
       const dy = e.clientY - node.y;
       const d = Math.hypot(dx, dy);
-      if (d < 150 && d > 1) {
-        const implode = Math.pow((150 - d) / 150, 2.2) * 9.2;
+      if (d < triggerRadius && d > 1) {
+        const implode = Math.pow((triggerRadius - d) / triggerRadius, 2.2) * (isMobile ? 6.5 : 9.2);
         node.vx += (dx / d) * implode;
         node.vy += (dy / d) * implode;
-        node.phosphor = Math.min(1, node.phosphor + (1 - d / 150) * 0.8);
+        node.phosphor = Math.min(1, node.phosphor + (1 - d / triggerRadius) * 0.8);
       }
     }
   });
@@ -249,13 +287,43 @@ try {
   const DAMPING = 0.865;
   const DISPERSAL_LIMIT = 15;
   const INTERACTION_CUTOFF = 78;
+  let isRunning = false;
+  let settleFrames = 0;
+  let stateRgb: [number, number, number] = [79, 163, 163];
+  let lastStatsTime = 0;
+
+  function refreshStateRgb() {
+    try {
+      const monthStats = overallMonthAnalysis(repo, monthStartOf(new Date()));
+      stateRgb = monthStats.status === 'ok' ? [127, 176, 138] : (monthStats.status === 'volatile' ? [194, 161, 77] : [79, 163, 163]);
+    } catch {
+      stateRgb = [79, 163, 163];
+    }
+  }
+  refreshStateRgb();
+
+  function wakeAnimation() {
+    settleFrames = 0;
+    if (!isRunning && isPageVisible) {
+      isRunning = true;
+      requestAnimationFrame(draw);
+    }
+  }
 
   function draw() {
-    requestAnimationFrame(draw);
-    if (!ctx || !isPageVisible) return;
+    if (!ctx || !isPageVisible) {
+      isRunning = false;
+      return;
+    }
 
     ctx.clearRect(0, 0, w, h);
     tick += 0.016;
+
+    const now = performance.now();
+    if (now - lastStatsTime > 2500) {
+      lastStatsTime = now;
+      refreshStateRgb();
+    }
 
     mouse.vx = mouse.targetX - mouse.prevX;
     mouse.vy = mouse.targetY - mouse.prevY;
@@ -289,9 +357,7 @@ try {
       }
     }
 
-    const monthStats = overallMonthAnalysis(repo, monthStartOf(new Date()));
-    const stateRgb = monthStats.status === 'ok' ? [127, 176, 138] : (monthStats.status === 'volatile' ? [194, 161, 77] : [79, 163, 163]);
-
+    let totalKinetic = 0;
     const activeNodes: PhononNode[] = [];
 
     // ۱. دینامیک شبکه فونونی و محاسبات تنش تانسوری
@@ -356,7 +422,7 @@ try {
           }
         }
 
-        // موج شوک برهم‌کنش کلیک
+        // موج شوک برهم‌کنش کلیک / لمس
         for (let s = 0; s < shockwaves.length; s++) {
           const sw = shockwaves[s]!;
           if (sw.implosionTimer <= 0) {
@@ -393,10 +459,9 @@ try {
 
         // استهلاک نمایی فسفرسانس
         node.phosphor *= 0.955;
-
-        // تانسور تنش موضعی
         const speed = Math.hypot(node.vx, node.vy);
         const distOrig = Math.hypot(node.x - node.ox, node.y - node.oy);
+        totalKinetic += speed + distOrig + node.phosphor;
         node.strain = Math.min(1, (distOrig / DISPERSAL_LIMIT) * 0.72 + (speed / 3.0) * 0.28);
 
         if (node.strain > 0.07 || node.phosphor > 0.1) {
@@ -421,23 +486,26 @@ try {
         ctx.fill();
       }
     }
-
     // ۲. تارهای الاستیک فوتونی بین گره‌های برانگیخته
+    const maxThreadDist = GRID_STEP * 1.45;
+    const maxDistSq = maxThreadDist * maxThreadDist;
     ctx.lineWidth = 0.65;
     for (let i = 0; i < activeNodes.length; i++) {
       const p1 = activeNodes[i]!;
       for (let j = i + 1; j < activeNodes.length; j++) {
         const p2 = activeNodes[j]!;
         const dx = p1.x - p2.x;
+        if (Math.abs(dx) > maxThreadDist) continue;
         const dy = p1.y - p2.y;
-        const d = Math.hypot(dx, dy);
-
-        if (d < GRID_STEP * 1.45) {
+        if (Math.abs(dy) > maxThreadDist) continue;
+        const dSq = dx * dx + dy * dy;
+        if (dSq < maxDistSq) {
+          const d = Math.sqrt(dSq);
           const avgGlow = Math.max(
             (p1.strain + p2.strain) * 0.5,
             (p1.phosphor + p2.phosphor) * 0.5
           );
-          const alpha = (1 - (d / (GRID_STEP * 1.45))) * avgGlow * 0.42;
+          const alpha = (1 - (d / maxThreadDist)) * avgGlow * 0.42;
 
           ctx.beginPath();
           ctx.moveTo(p1.x, p1.y);
@@ -449,9 +517,32 @@ try {
         }
       }
     }
+
+    const isQuiet = shockwaves.length === 0 && !mouse.active && mouse.hoverScalar < 0.005 && activeNodes.length === 0 && totalKinetic < 1.0;
+    if (isQuiet) {
+      settleFrames++;
+    } else {
+      settleFrames = 0;
+    }
+
+    if (settleFrames > 25) {
+      for (let i = 0; i < nodes.length; i++) {
+        const n = nodes[i]!;
+        n.x = n.ox;
+        n.y = n.oy;
+        n.vx = 0;
+        n.vy = 0;
+        n.phosphor = 0;
+        n.strain = 0;
+      }
+      isRunning = false;
+      return;
+    }
+
+    requestAnimationFrame(draw);
   }
 
-  requestAnimationFrame(draw);
+  wakeAnimation();
 })();
 
 export { state };

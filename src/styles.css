@@ -244,7 +244,7 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0;
   position: fixed; bottom: 24px; right: 50%; transform: translateX(50%) translateY(16px);
   background: var(--toast-bg); color: var(--ink); border: 1px solid var(--line);
   padding: 9px 18px; border-radius: var(--radius-s); font-size: .84rem;
-  opacity: 0; pointer-events: none; transition: .25s; z-index: 80; max-width: 90vw; text-align: center;
+  opacity: 0; pointer-events: none; transition: .25s; z-index: 120; max-width: 90vw; text-align: center;
 }
 #toast.show { opacity: 1; transform: translateX(50%) translateY(0); }
 .modal textarea {
@@ -616,7 +616,12 @@ input[type='number']::-webkit-inner-spin-button { -webkit-appearance: none; marg
 }
 
 /* ---------- report v2: unified toolbar + light task cards ---------- */
-.report-bar { padding: 14px 16px; }
+.report-bar {
+  padding: 14px 16px;
+  overflow: visible !important;
+  position: relative;
+  z-index: 30;
+}
 .rb-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 .rb-nav {
   display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
@@ -760,11 +765,25 @@ input[type='number']::-webkit-inner-spin-button { -webkit-appearance: none; marg
   display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
   margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line);
 }
-.range-wrap { position: relative; }
+.range-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
 .rcal {
-  position: absolute; top: calc(100% + 8px); inset-inline-end: 0; z-index: 45;
-  margin-top: 0; width: 320px; max-width: calc(100vw - 32px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, .45);
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 60;
+  margin-top: 0;
+  width: 320px;
+  max-width: calc(100vw - 32px);
+  background: var(--surface2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
+  padding: 10px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, .55);
 }
 .tr-meta {
   display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px;
@@ -1061,7 +1080,7 @@ body {
   overflow-x: hidden;
 }
 
-/* بوم پس‌زمینه ذرات */
+/* بوم پس‌زمینه ذرات با لایه مجزای GPU */
 #bg-canvas {
   position: fixed;
   inset: 0;
@@ -1069,6 +1088,8 @@ body {
   height: 100vh;
   pointer-events: none;
   z-index: 0;
+  transform: translateZ(0);
+  contain: strict;
 }
 
 /* کارت‌ها با استایل شیشه‌ای مات تیره */
@@ -1081,6 +1102,82 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.06) !important;
   transition: border-color 0.25s ease, box-shadow 0.25s ease;
   overflow: hidden;
+}
+.card.report-bar, .report-bar {
+  overflow: visible !important;
+  position: relative;
+  z-index: 30 !important;
+  padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.rb-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.rb-title-group {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.rb-title {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.rb-sub {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+.rb-nav-wrap {
+  display: inline-flex;
+  align-items: center;
+}
+.rb-month-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.rb-month-nav .btn {
+  margin: 0;
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+.rb-controls-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.rb-kind-pills, .rb-chart-pills {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-s);
+  padding: 3px;
+}
+.rb-rolling-pills {
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-s);
+  padding: 2px;
+  gap: 2px;
 }
 
 /* لبه نوری کارت‌ها هنگام نزدیک شدن ماوس */
@@ -1111,9 +1208,14 @@ body {
   box-shadow: 0 12px 36px -10px rgba(0, 0, 0, 0.6), 0 0 20px rgba(79, 163, 163, 0.08);
 }
 
-.topbar, .wrap, #modal-root {
+.topbar, .wrap {
   position: relative;
   z-index: 1;
+}
+
+#modal-root {
+  position: relative;
+  z-index: 100;
 }
 
 .topbar { background: rgba(14, 17, 20, .86); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
@@ -1256,4 +1358,593 @@ select.em-ctl {
 .em-hint { color: var(--accent); font-weight: 600; }
 
 
+/* جلوگیری از مسدود شدن کلیک توسط خط اصلی نمودار */
+svg path {
+  pointer-events: none;
+}
+
+/* فعال‌سازی قطعی دریافت کلیک برای نقاط */
+[data-action="open-entry"] {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+
+/* ---------- بهینه‌سازی حرفه‌ای موبایل ---------- */
+@media (max-width: 640px) {
+  :root {
+    font-size: 100%;
+  }
+
+  /* نوار بالای چسبان با بلور مات و تاچ تارگت استاندارد */
+  .topbar-inner {
+    padding: 10px 14px;
+    padding-top: calc(10px + env(safe-area-inset-top, 0px));
+    gap: 8px;
+  }
+  .topbar .icon-btn {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* دکمه‌های پرایمری و ردیف‌های لمسی بزرگ */
+  .btn {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn.small {
+    min-height: 40px;
+    padding: 8px 12px;
+    touch-action: manipulation;
+  }
+  .seg-pill, .seg-pills button {
+    min-height: 38px !important;
+    padding: 6px 12px !important;
+    font-size: 0.82rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+  }
+  .date-btn.small-date {
+    min-height: 38px !important;
+    height: auto !important;
+    padding: 6px 12px !important;
+    display: inline-flex;
+    align-items: center;
+    touch-action: manipulation;
+  }
+
+  /* کارت‌ها و پدینگ هماهنگ در صفحات باریک */
+  .card, .report-bar, .sheet-block, .wall-card, .dash-card {
+    padding: 14px !important;
+    border-radius: 8px !important;
+  }
+  
+  .wall {
+    padding: 8px;
+    border-radius: 6px;
+  }
+  .wall-grid {
+    gap: 3px;
+  }
+  .wall-cell {
+    height: 48px;
+    border-radius: 4px;
+  }
+  .wall-cell b {
+    font-size: 0.72rem;
+  }
+  .wall-cell i {
+    font-size: 0.52rem;
+  }
+
+  /* تبدیل مودال‌ها به باتم‌شیت استاندارد موبایل با لایه‌بندی بالاتر از نوار ناوبری */
+  .overlay {
+    display: flex;
+    align-items: flex-end;
+    padding: 0;
+    z-index: 100;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .modal {
+    width: 100%;
+    max-width: 100%;
+    max-height: 88vh;
+    border-radius: 18px 18px 0 0 !important;
+    border: 1px solid var(--line);
+    border-bottom: 0;
+    padding: 16px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    animation: sheet-up 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .modal::before {
+    content: '';
+    display: block;
+    width: 44px;
+    height: 5px;
+    border-radius: 3px;
+    background: var(--line);
+    margin: 0 auto 16px;
+  }
+  .modal-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  .modal-actions .btn {
+    flex: 1 1 auto;
+    min-height: 44px;
+  }
+
+  /* استپرهای زمانی سریع و کلیدهای روزهای هفته با دسترسی شست */
+  .stepper-chip {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .dpw-seg button {
+    min-height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.84rem;
+    font-weight: 700;
+    touch-action: manipulation;
+  }
+  .ecal-cell {
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+  }
+  .swatch {
+    width: 36px;
+    height: 36px;
+    touch-action: manipulation;
+  }
+
+  /* نوار پایینی ثابت با تاچ تارگت استاندارد */
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    inset-inline: 0;
+    z-index: 40;
+    background: rgba(14, 17, 20, 0.88);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-top: 1px solid var(--line);
+    padding: 4px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+    justify-content: space-around;
+  }
+  .bn-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    min-height: 48px;
+    background: transparent;
+    border: 0;
+    color: var(--muted);
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 5px 0;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 0.15s ease, transform 0.1s ease;
+  }
+  .bn-item:active {
+    transform: scale(0.92);
+  }
+  .bn-item.active {
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .bn-item svg {
+    width: 21px;
+    height: 21px;
+  }
+
+  /* اکشن‌های تسک‌ها و روزها در موبایل */
+  .day-task {
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    padding: 10px 0 !important;
+  }
+  .day-task .d-actions {
+    margin-inline-start: 0 !important;
+    width: 100% !important;
+  }
+  .day-task .d-actions .btn {
+    flex: 1 1 auto;
+    min-height: 40px;
+  }
+  .t2-actions {
+    margin-inline-start: 0 !important;
+    width: 100% !important;
+  }
+  .t2-actions .btn {
+    min-height: 38px !important;
+    height: auto !important;
+    padding: 6px 12px !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .hero .btn.primary, [data-action="open-task"] {
+    min-height: 38px;
+  }
+
+  /* هدر تب داده‌ها در موبایل */
+  .banner-header {
+    min-height: 54px;
+    height: auto !important;
+    padding: 10px 14px !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+  .banner-header .btn-teal {
+    min-height: 38px;
+  }
+
+  /* بهینه‌سازی تمیز و حرفه‌ای هدر گزارش در موبایل */
+  .card.report-bar, .report-bar {
+    padding: 14px !important;
+    gap: 12px !important;
+  }
+  .rb-top-row {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+  }
+  .rb-title-group {
+    display: flex !important;
+    align-items: baseline !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    width: 100% !important;
+    flex-wrap: wrap !important;
+  }
+  .rb-title {
+    font-size: 1.15rem !important;
+  }
+  .rb-sub {
+    font-size: 0.76rem !important;
+    opacity: 0.75 !important;
+  }
+  .rb-nav-wrap {
+    width: 100% !important;
+    display: flex !important;
+  }
+  .rb-month-nav {
+    display: flex !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+  .rb-month-nav .btn {
+    flex: 1 !important;
+    min-height: 40px !important;
+    justify-content: center !important;
+    font-size: 0.84rem !important;
+    white-space: nowrap !important;
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 4px !important;
+  }
+  .rb-rolling-pills {
+    display: flex !important;
+    width: 100% !important;
+    gap: 3px !important;
+    height: 38px !important;
+  }
+  .rb-rolling-pills .seg-pill {
+    flex: 1 !important;
+    min-height: 32px !important;
+    justify-content: center !important;
+    font-size: 0.78rem !important;
+    padding: 0 !important;
+  }
+  .range-wrap {
+    width: 100% !important;
+    display: flex !important;
+    gap: 8px !important;
+  }
+  .range-wrap .date-btn.small-date {
+    flex: 1 !important;
+    justify-content: center !important;
+    min-height: 40px !important;
+  }
+  .rb-controls-row {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+    padding-top: 10px !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+  }
+  .rb-kind-pills {
+    display: flex !important;
+    width: 100% !important;
+    gap: 3px !important;
+    padding: 3px !important;
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.07) !important;
+    border-radius: 4px !important;
+  }
+  .rb-kind-pills .seg-pill {
+    flex: 1 !important;
+    min-height: 38px !important;
+    font-size: 0.82rem !important;
+    text-align: center !important;
+    justify-content: center !important;
+    padding: 6px 2px !important;
+    white-space: nowrap !important;
+  }
+  .rb-chart-pills {
+    display: flex !important;
+    width: 100% !important;
+    gap: 3px !important;
+    padding: 3px !important;
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.07) !important;
+    border-radius: 4px !important;
+  }
+  .rb-chart-pills .seg-pill {
+    flex: 1 !important;
+    min-height: 36px !important;
+    font-size: 0.8rem !important;
+    text-align: center !important;
+    justify-content: center !important;
+    padding: 6px 2px !important;
+    white-space: nowrap !important;
+  }
+  .rcal {
+    position: absolute !important;
+    top: calc(100% + 8px) !important;
+    left: 0 !important;
+    right: 0 !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+    max-width: 320px !important;
+    z-index: 60 !important;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65) !important;
+  }
+  /* اسکرول نرم لمسی نمودارها */
+  .lc-scroll-wrap {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  /* جلوگیری از زوم ناخواسته در ورودی‌های آیفون */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+
+  /* تنظیم فاصله پایین برای جلوگیری از پوشانده‌شدن محتوا توسط نوار ناوبری */
+  .wrap {
+    padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
+
+
+/* ---------- UI/UX Upgrade: Radial, Gauge, Scrubber & Bento ---------- */
+
+/* هیرو با حلقه رادیال و نشانگر استریک */
+.hero-card-modern {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.005) 100%), var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.hero-main { display: flex; align-items: center; gap: 20px; }
+.hero-ring-wrap { position: relative; width: 68px; height: 68px; flex: none; display: grid; place-items: center; }
+.hero-ring-svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+.hero-ring-bg { fill: none; stroke: var(--surface2); stroke-width: 6; }
+.hero-ring-val { fill: none; stroke: var(--accent); stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+.hero-ring-text { font-size: 0.8rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.hero-streak-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(224, 108, 58, 0.12); color: #e06c3a;
+  border: 1px solid rgba(224, 108, 58, 0.3); border-radius: var(--radius-s);
+  padding: 2px 8px; font-size: 0.72rem; font-weight: 700; margin-top: 4px;
+}
+
+/* دکمه‌های شیشه‌ای مدرن ثبت سریع */
+.quick-chip-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  color: var(--ink);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.quick-chip-btn:hover {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: translateY(-1px);
+}
+.quick-chip-btn:active { transform: scale(0.94); }
+
+/* گیج پایداری متریال SD در تب گزارش */
+.sd-gauge-wrap {
+  background: var(--surface2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
+  padding: 14px 18px;
+  margin: 14px 0;
+}
+.sd-gauge-track {
+  height: 8px;
+  background: #1e272e;
+  border-radius: 4px;
+  position: relative;
+  overflow: visible;
+  margin: 12px 0 6px;
+}
+.sd-zone-safe { position: absolute; left: 0; width: 50%; height: 100%; background: rgba(127, 176, 138, 0.35); border-radius: 4px 0 0 4px; }
+.sd-zone-warn { position: absolute; right: 0; width: 50%; height: 100%; background: rgba(194, 161, 77, 0.25); border-radius: 0 4px 4px 0; }
+.sd-gauge-pointer {
+  position: absolute; top: -4px; width: 4px; height: 16px; border-radius: 2px;
+  background: #fff; box-shadow: 0 0 8px rgba(255,255,255,0.8);
+  transform: translateX(-50%); transition: left 0.5s ease;
+}
+.sd-gauge-meta { display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--muted); }
+
+/* استپرهای زمان در مودال */
+.time-stepper { display: flex; gap: 6px; margin: 8px 0 12px; flex-wrap: wrap; }
+.stepper-chip {
+  flex: 1; padding: 7px 0; background: var(--surface2);
+  border: 1px solid var(--line); border-radius: var(--radius-s);
+  color: var(--ink); font-size: 0.76rem; font-weight: 600; cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.stepper-chip:hover { border-color: var(--accent); background: var(--accent-dim); }
+
+/* انیمیشن لود نرم روزهای تقویم */
+.wall-cell.animated { animation: cell-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
+
+
+/* ---------- ردیف تسک‌های روزانه (تیز، تمیز و یکپارچه با دیزاین سیستم) ---------- */
+.day-task {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  border-radius: 0;
+  transition: background 0.15s ease;
+}
+.day-task:first-child { padding-top: 6px; }
+.day-task:last-child { border-bottom: 0; padding-bottom: 6px; }
+.day-task:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.day-task .d-hours {
+  font-size: 1.25rem;
+  font-weight: 800;
+  min-width: 95px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.day-task .d-hours.none {
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+
+.day-task .d-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.4;
+}
+
+.day-task .d-meta {
+  font-size: 0.76rem;
+  color: var(--muted);
+  margin-top: 3px;
+  line-height: 1.6;
+}
+.day-task .d-meta b {
+  color: var(--ink);
+  font-weight: 600;
+}
+.day-task .d-meta .sep {
+  display: inline-block;
+  margin: 0 6px;
+  opacity: 0.3;
+}
+
+/* بج‌های وضعیت فلت و لبه‌تیز */
+.day-task .mini-chip {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 2px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.day-task .mini-chip.hit {
+  background: rgba(127, 176, 138, 0.12);
+  color: #7fb08a;
+  border-color: rgba(127, 176, 138, 0.25);
+}
+.day-task .mini-chip.under {
+  background: rgba(194, 161, 77, 0.12);
+  color: #c2a14d;
+  border-color: rgba(194, 161, 77, 0.25);
+}
+.day-task .mini-chip.none {
+  background: transparent;
+  color: var(--muted);
+  border-color: var(--line);
+}
+
+/* دکمه‌های تیز و مات با هاور نرم */
+.day-task .d-actions {
+  margin-inline-start: auto;
+  display: flex;
+  gap: 6px;
+}
+.day-task .d-actions .btn {
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.02);
+  border-color: var(--line);
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  transition: all 0.15s ease;
+}
+.day-task .d-actions .btn:hover {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.day-task .d-actions .btn.ghost {
+  background: transparent;
+  color: var(--muted);
+}
+.day-task .d-actions .btn.ghost:hover {
+  color: var(--ink);
+  border-color: var(--muted);
+}
 

@@ -256,6 +256,8 @@ export function viewData(repoOrCount: Repo | number): string {
         display: flex;
         align-items: center;
         justify-content: space-between;
+        gap: 0.75rem;
+        flex-wrap: wrap;
         padding-bottom: 0.6rem;
         border-bottom: 1px solid #141e23;
       }
@@ -269,15 +271,29 @@ export function viewData(repoOrCount: Repo | number): string {
         gap: 0.5rem;
       }
       .formula-chip {
-        font-size: 0.78rem;
-        color: #3bb29f;
-        background: #0b1114;
-        border: 1px solid rgba(59, 178, 159, 0.25);
-        padding: 0.2rem 0.65rem;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 0.18rem 0.55rem;
         border-radius: 3px;
-        font-weight: 600;
+        background-color: rgba(59, 178, 159, 0.08);
+        border: 1px solid rgba(59, 178, 159, 0.22);
+        color: #3bb29f;
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        flex-shrink: 0;
+        line-height: 1.4;
       }
-
+      @media (max-width: 640px) {
+        .guide-panel-head {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 0.5rem;
+        }
+        .formula-chip {
+          align-self: flex-start;
+        }
+      }
       .guide-items-grid {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -477,7 +493,7 @@ export function viewData(repoOrCount: Repo | number): string {
             <span style="color: #3bb29f;">◆</span>
             روش SD و اصول پیوستگی کارکرد
           </h4>
-          <div class="formula-chip">انحراف معیار &lt; میانگین ÷ ۲</div>
+          <span class="formula-chip">انحراف معیار &lt; میانگین ÷&nbsp;۲</span>
         </div>
 
         <div class="guide-items-grid">

@@ -1,13 +1,14 @@
 /* Number/date formatting per user settings. Pure. */
 
 import type { DBData } from './types';
+import { formatPersianFull } from './jalali';
 export interface AppSettings {
   chartDir: 'ltr' | 'rtl';
   timeFormat: 'hm' | 'decimal';
 }
 const FA_NUM = new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 2 });
 const FA_NUM1 = new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 1 });
-export const FA_DATE_FULL = new Intl.DateTimeFormat('fa-IR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+export const FA_DATE_FULL = { format: formatPersianFull };
 
 export const faNum = (n: number): string => FA_NUM.format(n);
 export const fmt1 = (n: number): string => FA_NUM1.format(Math.round(n * 100) / 100);

@@ -34,7 +34,7 @@ export function openEntryModal(repo: Repo, opts: { taskId?: string | null; date?
     '<div class="em-row">' +
     '<div><label class="em-lbl">تاریخ</label>' +
     '<button type="button" class="em-ctl em-date" id="f-date-btn" data-action="ecal-toggle">' +
-    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' +
+    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="10"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' +
     '<span>' + FA_DATE_FULL.format(isoToDate(date)) + '</span></button></div>' +
     '<div><label class="em-lbl">ساعت</label>' +
     '<input type="number" name="hours" id="f-hours" class="em-ctl em-num" step="any" min="0.05" max="24" placeholder="۰:۰۰" value="' + (entry ? entry.hours : '') + '" required autofocus></div>' +
@@ -48,14 +48,17 @@ export function openEntryModal(repo: Repo, opts: { taskId?: string | null; date?
     '</div>' +
     '<div class="ecal-grid" id="entry-cal-grid"></div>' +
     '</div>' +
-    '<div class="em-seg">' +
-    '<button type="button" data-action="eh-add" data-amount="-0.5">−۳۰ دقیقه</button>' +
-    '<button type="button" data-action="eh-add" data-amount="0.5">+۳۰ دقیقه</button>' +
-    '<button type="button" data-action="eh-add" data-amount="1">+۱ ساعت</button>' +
+    /* استپرهای زمانی سریع با چینش افقی لمسی */
+    '<div class="time-stepper">' +
+    '<button type="button" class="stepper-chip" data-action="eh-add" data-amount="0.25">+۱۵ د</button>' +
+    '<button type="button" class="stepper-chip" data-action="eh-add" data-amount="0.5">+۳۰ د</button>' +
+    '<button type="button" class="stepper-chip" data-action="eh-add" data-amount="1">+۱ س</button>' +
+    '<button type="button" class="stepper-chip" data-action="eh-add" data-amount="2">+۲ س</button>' +
+    '<button type="button" class="stepper-chip" data-action="eh-add" data-amount="-0.5">−۳۰ د</button>' +
     '</div>' +
     '<div class="em-hint" id="f-hours-hint"></div>' +
     '<label class="em-lbl">یادداشت (اختیاری)</label>' +
-    '<input type="text" name="note" class="em-ctl" maxlength="200" placeholder="مثلا: جلسهٔ تیم، تمرین عمیق" value="' + (entry ? esc(entry.note || '') : '') + '">' +
+    '<input type="text" name="note" class="em-ctl" maxlength="200" placeholder="مثلا: تمرین عمیق، مطالعه مبحث" value="' + (entry ? esc(entry.note || '') : '') + '">' +
     '<div class="modal-actions">' +
     (entry ? '<button type="button" class="btn ghost" data-action="delete-entry" data-entry="' + entry.id + '">حذف</button>' : '') +
     '<button type="button" class="btn ghost" data-action="close-modal">انصراف</button>' +
@@ -213,13 +216,14 @@ export function openPomodorusModal(repo: Repo): void {
   const userInput = document.getElementById('pomo-user');
   if (userInput instanceof HTMLInputElement) userInput.focus();
 }
+
 export function updatePomodorusLink(): void {
   const hint = document.getElementById('pomo-link-hint');
   const input = document.getElementById('pomo-user');
   if (!hint || !(input instanceof HTMLInputElement)) return;
   const name = input.value.trim();
   if (!name) { hint.innerHTML = ''; return; }
-  if (!/^[A-Za-z0-9_.-]+$/.test(name)) { hint.innerHTML = '<span style="color:var(--warn)">نام کاربری فقط حروف و اعداد انگلیسی، نقطه، خط تیره.</span>'; return; }
+  if (!/^[A-Za-z0-9_.-]+$/.test(name)) { hint.innerHTML = '<span style="color:var(--bad)">نام کاربری فقط حروف و اعداد انگلیسی، نقطه، خط تیره.</span>'; return; }
   const url = 'https://pomodorus.yazdan.me/api/profile/' + encodeURIComponent(name) + '?days=90';
   hint.innerHTML = 'لینک داده‌ات: <a href="' + esc(url) + '" target="_blank" rel="noopener noreferrer" dir="ltr">' + esc(url) + '</a>';
 }

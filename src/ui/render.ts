@@ -46,8 +46,9 @@ export function render(repo: Repo): void {
     if (state.tab !== lastTab) {
       lastTab = state.tab;
       app.classList.remove('view-in');
-      void app.offsetWidth; /* restart animation */
-      app.classList.add('view-in');
+      requestAnimationFrame(() => {
+        app.classList.add('view-in');
+      });
     }
   }
   document.querySelectorAll('.tabs button, .bottom-nav button').forEach(b => b.classList.toggle('active', (b as HTMLElement).dataset.tab === state.tab));

@@ -39,7 +39,6 @@ function smoothPath(pts: { x: number; y: number }[], yTop: number, yBase: number
     const p2 = pts[i + 1]!;
     const p3 = pts[i + 2 < n ? i + 2 : n - 1]!;
 
-    // جلوگیری از موج زدن خطوط در کف؛ اگر دو روز متوالی صفر باشند، خط کاملاً صاف می‌ماند
     if (Math.abs(p1.y - yBase) < 0.5 && Math.abs(p2.y - yBase) < 0.5) {
       d += ' L' + p2.x.toFixed(1) + ' ' + yBase.toFixed(1);
       continue;
@@ -119,22 +118,23 @@ export function lineChartHTML(
     clickable?: boolean;
     h?: number;
     hoverDay?: boolean;
-  },
+    taskId?: string | null;
+  } = {},
   s: AppSettings
 ): string {
   const n = days.length;
   if (!n) return '<div class="chart-empty">داده‌ای برای نمایش نیست</div>';
-  const { mean = 0, target = 0, h = 190 } = opts;
+  const { mean = 0, target = 0, h = 220 } = opts;
   const rtl = s.chartDir === 'rtl';
 
-  const W = 700;
-  const H = Math.max(h, 190);
+  // ابعاد پایه SVG
+  const W = Math.max(680, n * 24);
+  const H = Math.max(h, 220);
 
-  /* حاشیه‌های امن برای جداسازی کامل اعداد محورها از بدنه نمودار */
-  const padL = rtl ? 35 : 75;
-  const padR = rtl ? 75 : 35;
+  const padL = rtl ? 35 : 65;
+  const padR = rtl ? 65 : 35;
   const padT = 24;
-  const padB = 38;
+  const padB = 40;
 
   const plotW = W - padR - padL;
   const plotH = H - padT - padB;
@@ -148,7 +148,7 @@ export function lineChartHTML(
   }
   const maxV = peak * 1.22;
 
-  const insetX = 24;
+  const insetX = 20;
   const step = n > 1 ? (plotW - 2 * insetX) / (n - 1) : 0;
 
   const X = (i: number) => {
@@ -158,7 +158,7 @@ export function lineChartHTML(
   const Y = (v: number) => padT + (1 - v / maxV) * plotH;
 
   /* محور عمودی Y */
-  const yLabX = rtl ? W - padR + 14 : padL - 14;
+  const yLabX = rtl ? W - padR + 12 : padL - 12;
   const yLabAnchor = rtl ? 'start' : 'end';
 
   let grid = '';
@@ -187,12 +187,11 @@ export function lineChartHTML(
     const x = X(i).toFixed(1);
     ticks +=
       '<line class="lc-axis" x1="' + x + '" y1="' + yBase + '" x2="' + x + '" y2="' + (yBase + 5) + '"/>' +
-      '<text class="lc-xlab" x="' + x + '" y="' + (yBase + 20) + '" text-anchor="middle">' +
+      '<text class="lc-xlab" x="' + x + '" y="' + (yBase + 22) + '" text-anchor="middle">' +
       (n > 10 ? faNum(j.jd) : esc(jShortLabel(days[i]!.date))) +
       '</text>';
   }
 
-  /* رسم خطوط و گرادیان هوشمند */
   const seq = gradSeq++;
   const isMulti = series.length > 1;
   const totalSer = series.find(s => s.total) || (isMulti ? null : series[0]);
@@ -201,21 +200,41 @@ export function lineChartHTML(
   let areas = '';
   let paths = '';
 
-  // استایل‌های درون‌پاشیده‌شده برای تعامل روان و بدون نیاز به JS اضافه
   const styles = `
     <style>
-      .lc-line { transition: opacity 0.2s ease, stroke-width 0.2s ease; }
+      .lc-scroll-wrap {
+        width: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 6px;
+      }
+      .linechart {
+        min-width: 580px;
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      .lc-grid { stroke: rgba(255, 255, 255, 0.08); stroke-width: 1; stroke-dasharray: 4,4; }
+      .lc-base { stroke: rgba(255, 255, 255, 0.15); stroke-width: 1; }
+      .lc-axis { stroke: rgba(255, 255, 255, 0.2); stroke-width: 1; }
+      .lc-ylab, .lc-xlab { font-size: 11px; fill: rgba(255, 255, 255, 0.45); font-family: inherit; }
+      .lc-mean { stroke: #e3b341; stroke-dasharray: 4,4; stroke-width: 1.2; opacity: 0.75; }
+      .lc-target { stroke: #2ea043; stroke-dasharray: 4,4; stroke-width: 1.2; opacity: 0.75; }
+      .lc-line { transition: opacity 0.2s ease, stroke-width 0.2s ease; pointer-events: none; }
       .linechart:hover .lc-line { opacity: 0.25; }
       .linechart .lc-line:hover { opacity: 1 !important; stroke-width: 2.8px !important; }
-      .lc-day-col { cursor: crosshair; }
-      .lc-day-col .lc-guide { opacity: 0; transition: opacity 0.15s ease; }
-      .lc-day-col .lc-hover-dot { opacity: 0; transition: opacity 0.15s ease, transform 0.15s ease; transform-box: fill-box; transform-origin: center; }
+      .lc-hero-area { pointer-events: none; }
+      .lc-day-col { cursor: default; }
+      .lc-day-col.clickable { cursor: pointer; }
+      .lc-day-col .lc-guide { opacity: 0; transition: opacity 0.15s ease; pointer-events: none; }
+      .lc-day-col .lc-hover-dot { opacity: 0; transition: opacity 0.15s ease, transform 0.15s ease; transform-box: fill-box; transform-origin: center; pointer-events: none; }
       .lc-day-col:hover .lc-guide { opacity: 1; }
       .lc-day-col:hover .lc-hover-dot { opacity: 1; transform: scale(1.3); }
+      .lc-hit-area { pointer-events: all; }
     </style>
   `;
 
-  // تنها یک گرادیان زیر خط مجموع کشیده می‌شود تا چارت گل‌آلود نشود
   if (totalSer) {
     const segs = segmentsOf(totalSer.values, X, Y);
     let dArea = '';
@@ -231,7 +250,7 @@ export function lineChartHTML(
       const gid = 'hero-grad-' + seq;
       defs += `
         <linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="${totalSer.color}" stop-opacity="0.16"/>
+          <stop offset="0%" stop-color="${totalSer.color}" stop-opacity="0.18"/>
           <stop offset="100%" stop-color="${totalSer.color}" stop-opacity="0.0"/>
         </linearGradient>
       `;
@@ -239,7 +258,6 @@ export function lineChartHTML(
     }
   }
 
-  // رسم خطوط تسک‌ها با ضخامت‌های تفکیک‌شده
   series.forEach((ser) => {
     const segs = segmentsOf(ser.values, X, Y);
     let dLine = '';
@@ -255,19 +273,21 @@ export function lineChartHTML(
     `;
   });
 
-  /* ستون‌های تعاملی هاور + نشانگر خط‌کش و نقاط فعال */
+  const currentTaskId =
+    opts.taskId ||
+    (series.length === 1 && series[0]?.taskId ? series[0].taskId : (series.find(sr => sr.taskId && !sr.total)?.taskId || null));
+
   const colW = n > 1 ? step : plotW;
   let interaction = '';
 
   for (let i = 0; i < n; i++) {
     const cx = X(i);
-    const safeDate = esc(days[i]!.date);
+    const dateStr = days[i]!.date;
+    const safeDate = esc(dateStr);
 
-    // محاسبه برچسب راهنمای روز برای تولتیپ
-    let tip = esc(jDayLabel(days[i]!.date)) + '\n────────────────\n';
+    let tip = esc(jDayLabel(dateStr)) + '\n────────────────\n';
     let hasData = false;
 
-    // نقاط فقط درون المان فعال هاور برای همان روز ایجاد می‌شوند
     let dayDots = '';
     for (const ser of series) {
       const v = ser.values[i];
@@ -286,17 +306,24 @@ export function lineChartHTML(
       tip += 'بدون ثبت کارکرد';
     }
 
+    const clickAttrs = currentTaskId
+      ? `class="lc-day-col clickable" data-action="edit-day" data-task="${esc(currentTaskId)}" data-date="${safeDate}" data-hover-day="${safeDate}"`
+      : `class="lc-day-col" data-hover-day="${safeDate}"`;
+
+    const hitAreaAttrs = currentTaskId
+      ? `data-action="edit-day" data-task="${esc(currentTaskId)}" data-date="${safeDate}" style="cursor:pointer;"`
+      : `style="cursor:default;"`;
+
     interaction += `
-      <g class="lc-day-col" data-hover-day="${safeDate}">
+      <g ${clickAttrs}>
         <title>${tip.trim()}</title>
         <line class="lc-guide" x1="${cx.toFixed(1)}" y1="${padT}" x2="${cx.toFixed(1)}" y2="${yBase}" stroke="rgba(255,255,255,0.2)" stroke-dasharray="3,3" stroke-width="1.2"/>
         ${dayDots}
-        <rect class="lc-hit-area" x="${(cx - colW / 2).toFixed(1)}" y="${padT}" width="${colW.toFixed(1)}" height="${plotH}" fill="transparent"/>
+        <rect class="lc-hit-area" ${hitAreaAttrs} x="${(cx - colW / 2).toFixed(1)}" y="${padT}" width="${colW.toFixed(1)}" height="${plotH}" fill="#ffffff" opacity="0"/>
       </g>
     `;
   }
 
-  /* خطوط میانگین و هدف */
   let lines = '';
   if (mean > 0) {
     lines += `<line class="lc-mean" x1="${padL}" y1="${Y(mean).toFixed(1)}" x2="${W - padR}" y2="${Y(mean).toFixed(1)}"><title>میانگین: ${fmtHours(mean, s)} ساعت</title></line>`;
@@ -308,8 +335,9 @@ export function lineChartHTML(
   const legendItems = series.map(sr => ({ name: sr.name, color: sr.color }));
 
   return (
-    `<svg class="linechart" viewBox="0 0 ${W} ${H}" style="direction:ltr;overflow:visible;" preserveAspectRatio="xMidYMid meet" role="img">` +
     styles +
+    `<div class="lc-scroll-wrap">` +
+    `<svg class="linechart" viewBox="0 0 ${W} ${H}" style="direction:ltr;overflow:visible;" preserveAspectRatio="xMidYMid meet" role="img">` +
     (defs ? `<defs>${defs}</defs>` : '') +
     grid +
     areas +
@@ -318,6 +346,7 @@ export function lineChartHTML(
     ticks +
     interaction +
     `</svg>` +
+    `</div>` +
     legendHTML(legendItems) +
     linesLegend(mean, target, s) +
     axisCaption()

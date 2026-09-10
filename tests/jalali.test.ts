@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { toJ, monthStartOf, prevMonthStart, nextMonthStart, monthMeta, isoOf, isoToDate, addDays } from '../src/jalali';
+import { toJ, monthStartOf, prevMonthStart, nextMonthStart, monthMeta, isoOf, isoToDate, addDays, formatPersianFull } from '../src/jalali';
 
 describe('Jalali calendar', () => {
   it('converts a known Gregorian date to Jalali', () => {
@@ -37,5 +37,11 @@ describe('Jalali calendar', () => {
   it('isoOf/addDays round-trip across month end', () => {
     expect(isoOf(addDays(isoToDate('2026-07-31'), 1))).toBe('2026-08-01');
     expect(isoOf(addDays(isoToDate('2024-02-28'), 1))).toBe('2024-02-29'); // Gregorian leap
+  });
+  it('formats full Persian date in [DayOfWeek]، [DayNumber] [MonthName] [Year] format', () => {
+    // 2026-09-10 is Thursday, 19 Shahrivar 1405
+    expect(formatPersianFull(isoToDate('2026-09-10'))).toBe('پنج‌شنبه، ۱۹ شهریور ۱۴۰۵');
+    // 2026-03-21 is Saturday, 1 Farvardin 1405
+    expect(formatPersianFull(isoToDate('2026-03-21'))).toBe('شنبه، ۱ فروردین ۱۴۰۵');
   });
 });
