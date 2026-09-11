@@ -69,7 +69,7 @@ try {
   let h = window.innerHeight;
 
   let isMobile = w <= 640;
-  let GRID_STEP = isMobile ? 26 : 19;
+  let GRID_STEP = isMobile ? 38 : 26;
   let cols = 0;
   let rows = 0;
 
@@ -116,7 +116,7 @@ try {
     nodes = [];
     gridMatrix = [];
     isMobile = w <= 640;
-    GRID_STEP = isMobile ? 26 : 19;
+    GRID_STEP = isMobile ? 38 : 26;
     cols = Math.floor(w / GRID_STEP) + 2;
     rows = Math.floor(h / GRID_STEP) + 2;
     const startX = (w - (cols - 1) * GRID_STEP) / 2;
@@ -166,9 +166,10 @@ try {
     buildLattice();
   }
   resize();
+  let resizeTimer = 0;
   window.addEventListener('resize', () => {
-    resize();
-    wakeAnimation();
+    clearTimeout(resizeTimer);
+    resizeTimer = window.setTimeout(() => { resize(); wakeAnimation(); }, 120);
   }, { passive: true });
 
   const mouse = {
@@ -201,13 +202,18 @@ try {
     isPageVisible = !document.hidden;
     if (isPageVisible) wakeAnimation();
   });
-
+  let lastMoveTime = 0;
   let cardUpdateQueued = false;
   window.addEventListener('pointermove', (e) => {
     mouse.targetX = e.clientX;
     mouse.targetY = e.clientY;
     mouse.active = true;
-    wakeAnimation();
+
+    const now = performance.now();
+    if (now - lastMoveTime > 16) { // ~60 fps cap
+      lastMoveTime = now;
+      wakeAnimation();
+    }
 
     if (e.pointerType !== 'touch' && !cardUpdateQueued) {
       cardUpdateQueued = true;
@@ -282,15 +288,14 @@ try {
 
   // ثوابت فیزیک شبکه بس‌ذره‌ای
   const RESTORE_K = 0.056;
-  const PHONON_ORTHO = 0.018; // جفت‌شدگی عمودی/افقی
-  const PHONON_DIAG = 0.007;  // جفت‌شدگی فونونی قطری (آن‌ایزوتروپی هگزاگونال)
+  const PHONON_ORTHO = 0.018;
+  const PHONON_DIAG = 0.007;
   const DAMPING = 0.865;
   const DISPERSAL_LIMIT = 15;
   const INTERACTION_CUTOFF = 78;
   let isRunning = false;
   let settleFrames = 0;
   let stateRgb: [number, number, number] = [79, 163, 163];
-  let lastStatsTime = 0;
 
   function refreshStateRgb() {
     try {
@@ -301,6 +306,9 @@ try {
     }
   }
   refreshStateRgb();
+  (function scheduleRefresh() {
+    setTimeout(() => { refreshStateRgb(); scheduleRefresh(); }, 30_000);
+  })();
 
   function wakeAnimation() {
     settleFrames = 0;
@@ -311,19 +319,9 @@ try {
   }
 
   function draw() {
-    if (!ctx || !isPageVisible) {
-      isRunning = false;
-      return;
-    }
-
+    if (!ctx || !isPageVisible) { isRunning = false; return; }
     ctx.clearRect(0, 0, w, h);
     tick += 0.016;
-
-    const now = performance.now();
-    if (now - lastStatsTime > 2500) {
-      lastStatsTime = now;
-      refreshStateRgb();
-    }
 
     mouse.vx = mouse.targetX - mouse.prevX;
     mouse.vy = mouse.targetY - mouse.prevY;
@@ -542,7 +540,8 @@ try {
     requestAnimationFrame(draw);
   }
 
-  wakeAnimation();
+  // Defer until after the app's first render so JS startup isn't competing with canvas
+  requestAnimationFrame(() => requestAnimationFrame(wakeAnimation));
 })();
 
 export { state };

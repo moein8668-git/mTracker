@@ -144,6 +144,7 @@ export function attachEvents(repo: Repo): void {
         window.scrollTo({ top: 0 });
         break;
       case 'open-day':
+      case 'goto-day':
         state.day = d.date || todayIso();
         state.calMonth = isoOf(monthStartOf(isoToDate(state.day)));
         state.tab = 'daily';

@@ -339,7 +339,7 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0;
 }
 
 /* ---------- motion & micro-interactions ---------- */
-@keyframes view-in    { from { opacity: 0; transform: translateY(8px); } }
+@keyframes view-in    { from { opacity: 0; } to { opacity: 1; } }
 @keyframes cell-in    { from { opacity: 0; transform: scale(.8); } }
 @keyframes bar-grow   { from { transform: scaleY(0); } }
 @keyframes lc-draw    { from { stroke-dashoffset: 1; } }
@@ -349,18 +349,23 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0;
 @keyframes grow-w     { from { width: 0; } }
 
 /* تعویض تب */
-#app.view-in { animation: view-in .25s ease-out; }
+#app.view-in { animation: view-in .18s ease-out both; }
 
 /* دیوار ماه (سلول‌های کوچک راهنما انیمیشن ندارند) */
-.wall-cell:not(.blank):not(.mini) { animation: cell-in .3s ease-out backwards; }
+/* wall cells animate only when freshly rendered inside a new-tab paint */
+#app.view-in .wall-cell:not(.blank):not(.mini) { animation: cell-in .3s ease-out backwards; }
 
-/* میله‌های نمودار */
-.bar { transform-origin: bottom; animation: bar-grow .45s cubic-bezier(.22, 1, .36, 1) backwards; }
+/* میله‌های نمودار — animate only on new-tab entry */
+.bar { transform-origin: bottom; }
+#app.view-in .bar { animation: bar-grow .4s cubic-bezier(.22, 1, .36, 1) backwards; }
 
-/* نمودار خطی */
-.lc-line { stroke-dasharray: 1; animation: lc-draw .7s ease-out; }
-.lc-dot { animation: fade-in .3s ease-out .35s backwards; }
-.lc-mean, .lc-target { animation: fade-in .4s ease-out .5s backwards; }
+/* نمودار خطی — same scoping */
+.lc-line { stroke-dasharray: 1; }
+#app.view-in .lc-line { animation: lc-draw .55s ease-out; }
+.lc-dot { }
+#app.view-in .lc-dot { animation: fade-in .3s ease-out .25s backwards; }
+.lc-mean, .lc-target { }
+#app.view-in .lc-mean, #app.view-in .lc-target { animation: fade-in .3s ease-out .35s backwards; }
 
 /* مودال */
 .overlay { animation: overlay-in .18s ease-out; }
@@ -433,7 +438,8 @@ circle.lc-dotv:hover, .lc-pt:hover .lc-dotv { r: 5px; filter: brightness(1.3); }
 .wall-cell.clickable { cursor: pointer; transition: transform .15s ease, border-color .15s ease; }
 .wall-cell.clickable:hover { transform: scale(1.06); border-color: var(--accent); }
 @keyframes today-glow { 0%, 100% { outline-color: var(--accent); } 50% { outline-color: rgba(79, 163, 163, .3); } }
-.wall-grid .wall-cell.today { animation: cell-in .3s ease-out backwards, today-glow 2.8s ease-in-out .5s infinite; }
+/* today-glow: pulse 3 times then stop — not an infinite battery-drain loop */
+.wall-grid .wall-cell.today { animation: cell-in .3s ease-out backwards, today-glow 2.8s ease-in-out .5s 3; }
 
 /* empty states: dashed hint */
 .empty-state { border-style: dashed; }
@@ -1088,8 +1094,15 @@ body {
   height: 100vh;
   pointer-events: none;
   z-index: 0;
+  will-change: transform;
   transform: translateZ(0);
   contain: strict;
+}
+/* App shell: its own stacking context; contain layout so reflows stay inside */
+#app {
+  position: relative;
+  z-index: 1;
+  contain: layout style;
 }
 
 /* کارت‌ها با استایل شیشه‌ای مات تیره */
@@ -1948,3 +1961,44 @@ svg path {
   border-color: var(--muted);
 }
 
+
+/* ---------- daily view: responsive tasks section (mobile matches today view cards) ---------- */
+/* Mobile-first: mobile card grid is active by default */
+.daily-tasks-desktop {
+  display: none !important;
+}
+
+.daily-tasks-mobile {
+  display: block;
+  margin-top: 14px;
+}
+
+.daily-tasks-mobile-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 18px 0 10px;
+  padding: 0 2px;
+}
+
+.daily-tasks-mobile-head h3 {
+  margin: 0;
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.daily-tasks-mobile .task-grid {
+  margin-top: 0;
+}
+
+/* Desktop view: min-width: 641px restores untouched single-card table rows */
+@media (min-width: 641px) {
+  .daily-tasks-desktop {
+    display: block !important;
+  }
+
+  .daily-tasks-mobile {
+    display: none !important;
+  }
+}

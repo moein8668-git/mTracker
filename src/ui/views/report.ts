@@ -121,7 +121,7 @@ function renderTaskBlock(t: Task, repo: Repo, p: ResolvedPeriod, s: ReturnType<t
     : '';
 
   const statusMsg = isTracked ? VERDICT_NOTE[a.status] : 'این تسک بدون برنامهٔ پایداری است و در تب «امروز» نمایش داده نمی‌شود.';
-  const clickHint = state.chartType === 'line' ? 'برای ویرایش روی نقاط خط کلیک کنید' : 'برای ویرایش روی میله‌ها کلیک کنید';
+  const clickHint = state.chartType === 'line' ? 'برای دیدن روز روی نقاط کلیک کنید' : 'برای دیدن روز روی میله‌ها کلیک کنید';
 
   return '<section class="card sheet-block" style="--task:' + esc(t.color) + '; padding:22px; margin-bottom:20px; border-radius:4px; border-top:3px solid var(--task);">' +
     '<div class="tr-head" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:6px;">' +
@@ -206,9 +206,10 @@ export function viewReport(repo: Repo): string {
       '</div>' +
       statCards(overallStats) +
       '<div class="tr-chart" style="margin:18px 0 14px 0;">' + ovChart + '</div>' +
-      '<div class="tr-foot" style="margin-top:16px; padding-top:12px; border-top:1px dashed rgba(255,255,255,0.08); font-size:0.82rem; opacity:0.8;">' +
-        '<span>' + VERDICT_NOTE[ov.status] + '</span>' +
-      '</div>' +
+      '\u003cdiv class="tr-foot" style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; padding-top:12px; border-top:1px dashed rgba(255,255,255,0.08); font-size:0.82rem; opacity:0.8;"\u003e' +
+        '\u003cspan\u003e' + VERDICT_NOTE[ov.status] + '\u003c/span\u003e' +
+        (state.chartType === 'line' ? '\u003cspan class="tr-hint" style="opacity:0.6;"\u003eبرای رفتن به روز روی نقاط کلیک کنید\u003c/span\u003e' : '') +
+      '\u003c/div\u003e' +
     '</section>';
 
   for (const t of tasks) {

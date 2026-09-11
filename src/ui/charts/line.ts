@@ -307,12 +307,10 @@ export function lineChartHTML(
     }
 
     const clickAttrs = currentTaskId
-      ? `class="lc-day-col clickable" data-action="edit-day" data-task="${esc(currentTaskId)}" data-date="${safeDate}" data-hover-day="${safeDate}"`
-      : `class="lc-day-col" data-hover-day="${safeDate}"`;
+      ? `class="lc-day-col clickable" data-action="goto-day" data-date="${safeDate}" data-hover-day="${safeDate}"`
+      : `class="lc-day-col clickable" data-action="goto-day" data-date="${safeDate}" data-hover-day="${safeDate}"`;
 
-    const hitAreaAttrs = currentTaskId
-      ? `data-action="edit-day" data-task="${esc(currentTaskId)}" data-date="${safeDate}" style="cursor:pointer;"`
-      : `style="cursor:default;"`;
+    const hitAreaAttrs = `data-action="goto-day" data-date="${safeDate}" style="cursor:pointer;"`;
 
     interaction += `
       <g ${clickAttrs}>

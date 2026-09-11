@@ -38,9 +38,7 @@ export function chartHTML(days: DayPoint[], opts: { mean?: number; target?: numb
     const showLabel = j.jd === 1 || j.jd === lastJd || j.jd % 5 === 0;
     const delay = Math.min(i * 8, 360);
     const bg = useLevels && d.hours > 0 ? 'background:' + LEVEL_BG[levelOf(d.hours, rawMax)] + ';' : '';
-    const attrs = taskId
-      ? ' class="bar-col clickable" data-action="edit-day" data-task="' + taskId + '" data-date="' + d.date + '" data-hover-day="' + d.date + '"'
-      : ' class="bar-col" data-hover-day="' + d.date + '"';
+    const attrs = ' class="bar-col clickable" data-action="goto-day" data-date="' + d.date + '" data-hover-day="' + d.date + '"';
     return '<div' + attrs + '>' +
       '<div class="bar ' + (d.hours > 0 ? '' : 'zero') + '" style="height:' + h.toFixed(1) + '%;' + bg + 'animation-delay:' + delay + 'ms"></div>' +
       '<span class="bar-day">' + (showLabel ? faNum(j.jd) : '') + '</span>' +

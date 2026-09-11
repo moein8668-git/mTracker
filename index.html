@@ -2,6 +2,20 @@
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
+<style>
+/* Critical inline CSS — renders before external stylesheet; prevents flash of unstyled skeleton */
+html,body{margin:0;padding:0;background:#0e1114;color:#e8ecee;font-family:system-ui,Tahoma,sans-serif}
+.topbar{position:sticky;top:0;background:rgba(14,17,20,.92);border-bottom:1px solid #263038;z-index:30}
+.topbar-inner{display:flex;align-items:center;gap:12px;padding:10px 20px;max-width:1080px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:.95rem}
+.brand .logo{width:28px;height:28px;flex:none;border-radius:7px}
+.wrap{max-width:1080px;margin:0 auto;padding:22px 20px 90px}
+@keyframes sk-shimmer{from{background-position:200% 0}to{background-position:-200% 0}}
+#app-skeleton>*,#app-skeleton>*>*{animation:sk-shimmer 1.6s ease-in-out infinite;background:linear-gradient(90deg,rgba(255,255,255,.04) 25%,rgba(255,255,255,.08) 50%,rgba(255,255,255,.04) 75%) !important;background-size:400% 100% !important}
+.bottom-nav{display:none}
+@media(max-width:640px){.wrap{padding:14px 12px calc(90px + env(safe-area-inset-bottom,0px))}}
+</style>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0E1114">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -30,7 +44,21 @@
   </div>
 </header>
 
-<main class="wrap" id="app"></main>
+<main class="wrap" id="app">
+  <!-- inline skeleton: visible only before JS renders; JS wipes innerHTML immediately -->
+  <div id="app-skeleton" aria-hidden="true" style="pointer-events:none">
+    <div style="height:28px;width:55%;background:rgba(255,255,255,.05);border-radius:4px;margin-bottom:20px"></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:18px">
+      <div style="height:62px;background:rgba(255,255,255,.04);border-radius:4px"></div>
+      <div style="height:62px;background:rgba(255,255,255,.04);border-radius:4px"></div>
+      <div style="height:62px;background:rgba(255,255,255,.04);border-radius:4px"></div>
+    </div>
+    <div style="height:120px;background:rgba(255,255,255,.04);border-radius:4px;margin-bottom:14px"></div>
+    <div style="height:56px;background:rgba(255,255,255,.03);border-radius:4px;margin-bottom:10px"></div>
+    <div style="height:56px;background:rgba(255,255,255,.03);border-radius:4px;margin-bottom:10px"></div>
+    <div style="height:56px;background:rgba(255,255,255,.03);border-radius:4px"></div>
+  </div>
+</main>
 
 <!-- ناوبری مدرن پایینی برای موبایل با دسترسی شست دست -->
 <nav class="bottom-nav" aria-label="ناوبری موبایل">

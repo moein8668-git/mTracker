@@ -2,10 +2,10 @@
 import type { Repo } from '../../storage';
 import { appSettings, fmtHours, FA_DATE_FULL, faNum } from '../../settings';
 import { todayIso, isoOf, isoToDate, addDays, monthStartOf } from '../../jalali';
-import { taskPeriodAnalysis, streakOf, overallRollingMean } from '../../analysis';
+import { taskPeriodAnalysis, taskWeekAnalysis, streakOf, overallRollingMean } from '../../analysis';
 import { analyze } from '../../analytics';
-import { esc } from '../../utils';
-import { statBox } from '../bits';
+import { esc, normalizeDaysPerWeek } from '../../utils';
+import { statBox, badge } from '../bits';
 import { lineChartHTML } from '../charts/line';
 import { state } from '../state';
 import { jcalHTML } from '../jcal';
@@ -68,7 +68,8 @@ export function viewDaily(repo: Repo): string {
     '</section>';
   html += '</div>';
 
-  html += '<section class="card" style="margin-top:14px"><div class="card-head"><h3>تسک‌ها در این روز</h3></div>';
+  // Desktop view: original single-card structure with table-like rows (untouched on desktop screens)
+  let desktopHtml = '<section class="card daily-tasks-desktop" style="margin-top:14px"><div class="card-head"><h3>تسک‌ها در این روز</h3></div>';
   for (const t of tasks) {
     const e = byTask.get(t.id);
     const tp = taskPeriodAnalysis(repo, t, isoOf(addDays(isoToDate(dIso), -29)), dIso);
@@ -79,10 +80,10 @@ export function viewDaily(repo: Repo): string {
         : '<span class="mini-chip hit">ثبت شده</span>')
       : '<span class="mini-chip none">ثبت نشده</span>';
 
-    html += '<div class="day-task">' +
+    desktopHtml += '<div class="day-task">' +
       '<span class="dot" style="--task:' + t.color + '"></span>' +
       '<div class="d-hours' + (e ? '' : ' none') + '">' + (e ? fmtHours(e.hours, s) + ' ساعت' : 'ثبت نشده') + '</div>' +
-      '<div>' +
+      '<div class="d-body">' +
         '<div class="d-name">' + esc(t.name) + '</div>' +
         '<div class="d-meta">' +
         (t.targetDailyHours > 0 ? 'هدف: <b>' + fmtHours(t.targetDailyHours, s) + '</b> ساعت<span class="sep">|</span>' : '') +
@@ -98,6 +99,44 @@ export function viewDaily(repo: Repo): string {
       '<button class="btn small ghost" data-action="open-entry" data-task="' + t.id + '" data-date="' + dIso + '">ویرایش</button>' +
       '</div></div>';
   }
-  html += '</section>';
+  desktopHtml += '</section>';
+
+  // Mobile view: standalone task cards matching Today view's look and feel exactly
+  let mobileHtml = '<section class="daily-tasks-mobile">' +
+    '<div class="card-head daily-tasks-mobile-head"><h3>تسک‌ها در این روز</h3></div>' +
+    '<div class="task-grid">';
+  for (const t of tasks) {
+    const e = byTask.get(t.id);
+    const wk = isToday
+      ? taskWeekAnalysis(repo, t)
+      : taskPeriodAnalysis(repo, t, isoOf(addDays(isoToDate(dIso), -6)), dIso);
+    const wkChip = wk ? '<div class="week-chip"><span class="wc-label">۷ روز اخیر</span>' +
+      '<span>میانگین <b>' + fmtHours(wk.mean, s) + '</b></span>' +
+      '<span class="wc-sep" aria-hidden="true"></span>' +
+      '<span>انحراف <b>' + fmtHours(wk.sd, s) + '</b></span>' +
+      '<span class="wc-badge">' + badge(wk.status) + '</span></div>' : '';
+    const d = normalizeDaysPerWeek(t.daysPerWeek);
+    const targetText = t.targetDailyHours > 0
+      ? (d < 7 ? 'هدف: ' + fmtHours(t.targetDailyHours, s) + ' (' + faNum(d) + ' روز/هفته)' : 'هدف: ' + fmtHours(t.targetDailyHours, s) + ' ساعت در روز')
+      : (d < 7 ? faNum(d) + ' روز در هفته' : 'بدون هدف');
+    const pct = t.targetDailyHours > 0 ? Math.min(100, ((e ? e.hours : 0) / t.targetDailyHours) * 100) : null;
+
+    mobileHtml += '<article class="card task-card" style="--task:' + t.color + '">' +
+      '<header><span class="dot"></span><h3>' + esc(t.name) + '</h3>' +
+      '<span class="target-chip">' + targetText + '</span></header>' +
+      '<div class="today-row">' +
+      (e ? '<div class="today-hours">' + fmtHours(e.hours, s) + ' ساعت</div>'
+        : '<div class="today-hours none">ثبت نشده</div>') +
+      '<div class="quick">' +
+      '<button class="btn small" data-action="quick-add" data-task="' + t.id + '" data-date="' + dIso + '" data-amount="0.5">+۳۰ دقیقه</button>' +
+      '<button class="btn small" data-action="quick-add" data-task="' + t.id + '" data-date="' + dIso + '" data-amount="1">+۱ ساعت</button>' +
+      '<button class="btn small ghost" data-action="open-entry" data-task="' + t.id + '" data-date="' + dIso + '">ویرایش</button>' +
+      '</div></div>' +
+      (pct != null ? '<div class="progress"><i style="width:' + pct.toFixed(0) + '%"></i></div>' : '') +
+      wkChip + '</article>';
+  }
+  mobileHtml += '</div></section>';
+
+  html += desktopHtml + mobileHtml;
   return html;
 }

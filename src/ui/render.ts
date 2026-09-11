@@ -42,13 +42,17 @@ if (typeof window !== 'undefined') window.addEventListener('load', slideTabIndic
 export function render(repo: Repo): void {
   const app = document.getElementById('app');
   if (app) {
-    app.innerHTML = VIEWS[state.tab](repo);
-    if (state.tab !== lastTab) {
-      lastTab = state.tab;
+    const isNewTab = state.tab !== lastTab;
+    if (isNewTab) {
       app.classList.remove('view-in');
-      requestAnimationFrame(() => {
-        app.classList.add('view-in');
-      });
+      app.innerHTML = VIEWS[state.tab](repo);
+      lastTab = state.tab;
+      // Force reflow, then re-add: animation restarts in the same frame as the new
+      // content's first paint — no flash of unanimated content, no stale rAF timing.
+      void app.offsetWidth;
+      app.classList.add('view-in');
+    } else {
+      app.innerHTML = VIEWS[state.tab](repo);
     }
   }
   document.querySelectorAll('.tabs button, .bottom-nav button').forEach(b => b.classList.toggle('active', (b as HTMLElement).dataset.tab === state.tab));
