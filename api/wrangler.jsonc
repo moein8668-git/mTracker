@@ -2,8 +2,8 @@
   "name": "mtracker",
   "main": "src/index.ts",
   "compatibility_date": "2025-06-01",
+  "compatibility_flags": ["nodejs_compat"],
   "workers_dev": true
-  // All configuration lives in the dashboard (never in code):
   //
   // Bindings — Settings → Bindings → Add → Hyperdrive:
   //   binding name HYPERDRIVE, attached to your Aiven Hyperdrive config.
