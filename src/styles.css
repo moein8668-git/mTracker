@@ -1998,6 +1998,28 @@ svg path {
     display: block !important;
   }
 
+/* Sync chip */
+.sync-chip { position: relative; }
+.sync-chip i {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--bad);
+  border: 2px solid var(--surface);
+}
+.sync-chip.chip-on i { background: var(--ok); }
+.sync-chip.chip-err i { background: var(--bad); }
+.sync-chip.chip-run i {
+  background: var(--warn);
+  animation: chip-pulse 1.2s ease-in-out infinite;
+}
+@keyframes chip-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.3); }
+}
   .daily-tasks-mobile {
     display: none !important;
   }

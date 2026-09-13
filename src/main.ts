@@ -16,15 +16,26 @@ import { overallMonthAnalysis } from './analysis';
 
 import { monthStartOf } from './jalali';
 
+import { SyncEngine } from './sync/engine';
+
+import { updateSyncChip } from './ui/syncchip';
+
 const repo = new Repo(Storage.load(), msg => toast(msg));
+
+const sync = new SyncEngine(repo, {
+  onData: () => render(repo),
+  onStatus: () => updateSyncChip(sync),
+});
 
 try {
   state.tab = parseTabId(localStorage.getItem('mtracker.tab'));
   state.chartType = localStorage.getItem('mtracker.chart') === 'line' ? 'line' : 'bar';
 } catch { /* private mode: stay on today */ }
 
-attachEvents(repo);
+attachEvents(repo, sync);
 render(repo);
+sync.start();
+updateSyncChip(sync);
 
 /* first-visit welcome */
 try {

@@ -3,7 +3,7 @@ import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
-  server: { port: 5189, host: true },
+  server: { port: 5189, host: true, proxy: { '/api': 'http://localhost:8788' } },
   plugins: [
     VitePWA({
       includeAssets: ['icons/favicon-64.png', 'icons/favicon-dark-64.png', 'icons/icon-192.png'],
