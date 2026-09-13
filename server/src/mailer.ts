@@ -51,8 +51,8 @@ export class RelayMailer implements Mailer {
 }
 
 export function createMailer(): Mailer {
-  if (process.env.MAIL_RELAY_URL) {
-    return new RelayMailer(process.env.MAIL_RELAY_URL, process.env.MAIL_RELAY_SECRET ?? '');
+  if (process.env.MAIL_RELAY_URL && process.env.MAIL_RELAY_SECRET) {
+    return new RelayMailer(process.env.MAIL_RELAY_URL, process.env.MAIL_RELAY_SECRET);
   }
   return process.env.SMTP_URL ? new SmtpMailer(process.env.MAIL_FROM!) : new ConsoleMailer();
 }

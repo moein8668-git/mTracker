@@ -12,6 +12,7 @@
   //   RESEND_API_KEY    — Resend API key (re_...).
   //   MAIL_RELAY_SECRET — long random string; must match the API server's MAIL_RELAY_SECRET.
   // Hyperdrive (NOT used by this worker) — for the later full API port:
-  //   Workers & Pages → Hyperdrive → Create, paste the Aiven URL, and reference
-  //   its binding + id from the API worker's wrangler config when that port lands.
+  //   Workers & Pages → Hyperdrive → Create, paste the Aiven URL WITHOUT any
+  //   file ref (`...?sslmode=require`, no `sslrootcert=` — Hyperdrive manages TLS
+  //   itself), and reference its binding + id from the API worker's config then.
 }
