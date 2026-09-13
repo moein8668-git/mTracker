@@ -11,8 +11,6 @@
     "typecheck": "tsc --noEmit",
     "db:up": "docker compose -f server/docker-compose.yml up -d",
     "dev:server": "npm --prefix server run dev",
-    "dev:mail": "npm --prefix worker run dev",
-    "deploy:mail": "npm --prefix worker run deploy",
     "migrate": "npm --prefix server run migrate",
     "prepare": ""
   },

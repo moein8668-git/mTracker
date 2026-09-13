@@ -13,3 +13,6 @@ server/.env
 server/dist/
 bun.lock
 bun.lockb
+
+# Dashboard-managed mail relay (see email-worker/worker.js, deployed via paste)
+worker/
