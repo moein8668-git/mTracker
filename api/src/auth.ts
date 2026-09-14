@@ -13,7 +13,8 @@ import {
   timingSafeEqual,
   genOtpCode,
   genToken,
-  sendOtpMail,
+  makeDeliveryRequest,
+  sendDeliveryRequest,
   type Env,
 } from './util.js';
 
@@ -34,30 +35,26 @@ export async function handleOtp(req: Request, env: Env, sql: Sql): Promise<Respo
   }
   const email = raw.toLowerCase();
 
-  const recent = await sql`
-    SELECT created_at FROM otp_codes
-    WHERE email=${email} AND consumed_at IS NULL AND expires_at > now()
-    ORDER BY created_at DESC LIMIT 1`;
-  if (recent.length > 0) {
-    const age = (Date.now() - new Date(recent[0]!.created_at as string).getTime()) / 1000;
-    if (age < 60) return json(req, env, { error: 'throttled' }, 429);
-  }
-
-  const fifteen = new Date(Date.now() - 15 * 60 * 1000);
-  const counted = await sql`
-    SELECT COUNT(*)::text AS count FROM otp_codes
-    WHERE email=${email} AND created_at > ${fifteen}`;
-  if (Number(counted[0]!.count) >= 5) {
-    return json(req, env, { error: 'throttled' }, 429);
-  }
-
   const code = genOtpCode();
   const codeHash = await sha256Hex((env.OTP_PEPPER ?? '') + code);
   const expires = new Date(Date.now() + 10 * 60 * 1000);
-  await sql`INSERT INTO otp_codes (email, code_hash, expires_at) VALUES (${email}, ${codeHash}, ${expires})`;
-
-  const sent = await sendOtpMail(env, email, code);
-  if (!sent.ok) return json(req, env, { error: 'mail', detail: sent.detail }, 502);
+  const source = req.headers.get('CF-Connecting-IP') ?? 'unknown';
+  const { request, signature } = await makeDeliveryRequest(env, email, code, source);
+  const permitted = await sql.begin(async (tx) => {
+    const locks = [request.recipient, request.sourceId, request.accountId].sort();
+    for (const lock of locks) await tx`SELECT pg_advisory_xact_lock(hashtext(${lock}))`;
+    const recipient = await tx`SELECT count(*)::int AS n FROM otp_delivery_attempts WHERE recipient_hash=${request.accountId} AND created_at > now() - interval '15 minutes'`;
+    const sourceRows = await tx`SELECT count(*)::int AS n FROM otp_delivery_attempts WHERE source_id=${request.sourceId} AND created_at > now() - interval '1 hour'`;
+    const account = await tx`SELECT count(*)::int AS n FROM otp_delivery_attempts WHERE account_id=${request.accountId} AND created_at > now() - interval '1 day'`;
+    if (Number(recipient[0]!.n) >= 3 || Number(sourceRows[0]!.n) >= 10 || Number(account[0]!.n) >= 20) return false;
+    await tx`INSERT INTO otp_delivery_attempts (request_id, recipient_hash, source_id, account_id) VALUES (${request.requestId}, ${request.accountId}, ${request.sourceId}, ${request.accountId})`;
+    await tx`INSERT INTO otp_codes (email, code_hash, expires_at) VALUES (${email}, ${codeHash}, ${expires})`;
+    return true;
+  });
+  if (!permitted) return json(req, env, { error: 'throttled' }, 429);
+  const sent = await sendDeliveryRequest(env, request, signature);
+  await sql`UPDATE otp_delivery_attempts SET relay_status=${sent.ok ? 'accepted' : 'failed'} WHERE request_id=${request.requestId}`;
+  if (!sent.ok) return json(req, env, { error: 'mail' }, 502);
   return json(req, env, { ok: true });
 }
 

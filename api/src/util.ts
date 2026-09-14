@@ -1,109 +1,20 @@
-/* Shared worker utilities: env, CORS, hashing, randomness, mail relay. */
+import canonicalize from 'canonicalize';
 
-export interface Env {
-  HYPERDRIVE: Hyperdrive;
-  MAIL_RELAY_URL: string;
-  API_SECRET: string;
-  MAIL_FROM: string;
-  CORS_ORIGIN?: string;
-  OTP_PEPPER?: string;
-}
-
-export function corsAllowed(origin: string, env: Env): boolean {
-  const list = (env.CORS_ORIGIN ?? '')
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean);
-  return list.includes(origin);
-}
-
-export function json(req: Request, env: Env, body: unknown, status = 200): Response {
-  const res = Response.json(body, { status });
-  const origin = req.headers.get('Origin');
-  if (origin && corsAllowed(origin, env)) {
-    res.headers.set('Access-Control-Allow-Origin', origin);
-  }
-  res.headers.set('Vary', 'Origin');
-  return res;
-}
-
-export function corsPreflight(req: Request, env: Env): Response {
-  const res = new Response(null, { status: 204 });
-  const origin = req.headers.get('Origin');
-  if (origin && corsAllowed(origin, env)) {
-    res.headers.set('Access-Control-Allow-Origin', origin);
-  }
-  res.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.headers.set('Access-Control-Max-Age', '86400');
-  res.headers.set('Vary', 'Origin');
-  return res;
-}
-
-export async function readJson(req: Request): Promise<Record<string, unknown> | null> {
-  try {
-    const body = await req.json();
-    return body && typeof body === 'object' ? (body as Record<string, unknown>) : null;
-  } catch {
-    return null;
-  }
-}
-
-/** Hex SHA-256 — byte-identical to the Node API's sha256Hex, same shared DB. */
-export async function sha256Hex(s: string): Promise<string> {
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
-  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
-}
-
-export function timingSafeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) {
-    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  }
-  return diff === 0;
-}
-
-/** 6-digit code, same range as the Node API (100000–999999). */
-export function genOtpCode(): string {
-  const buf = new Uint32Array(1);
-  crypto.getRandomValues(buf);
-  return String((buf[0]! % 900000) + 100000);
-}
-
-/** 256-bit opaque token, base64url — same shape as the Node API's. */
-export function genToken(): string {
-  const buf = new Uint8Array(32);
-  crypto.getRandomValues(buf);
-  let s = '';
-  for (const b of buf) s += String.fromCharCode(b);
-  return btoa(s).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
-}
-
-export async function sendOtpMail(
-  env: Env,
-  to: string,
-  code: string,
-): Promise<{ ok: true } | { ok: false; detail: string }> {
-  let res: Response;
-  try {
-    res = await fetch(env.MAIL_RELAY_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        secret: env.API_SECRET,
-        from: env.MAIL_FROM,
-        to,
-        subject: 'کد ورود mTracker',
-        text: code + ' کد ورود شماست. ۱۰ دقیقه اعتبار دارد.',
-      }),
-    });
-  } catch {
-    return { ok: false, detail: 'relay_unreachable' };
-  }
-  if (!res.ok) {
-    const detail = await res.text().catch(() => '');
-    return { ok: false, detail: detail.slice(0, 200) };
-  }
-  return { ok: true };
-}
+export interface Env { HYPERDRIVE: Hyperdrive; MAIL_RELAY_URL: string; API_SECRET: string; MAIL_FROM: string; MAIL_SIGNING_PRIVATE_KEY: string; MAIL_SIGNING_KEY_ID: string; SOURCE_ID_PEPPER: string; ACCOUNT_ID_PEPPER: string; CORS_ORIGIN?: string; OTP_PEPPER?: string; }
+export interface DeliveryRequest { version:'1'; keyId:string; requestId:string; issuedAt:number; expiresAt:number; accountId:string; sourceId:string; recipient:string; from:string; templateId:'login-code-v1'; message:{subject:string;text:string}; messageHash:string; }
+export function corsAllowed(origin:string,env:Env){return (env.CORS_ORIGIN??'').split(',').map(s=>s.trim()).includes(origin);}
+export function json(req:Request,env:Env,body:unknown,status=200){const r=Response.json(body,{status});const o=req.headers.get('Origin');if(o&&corsAllowed(o,env))r.headers.set('Access-Control-Allow-Origin',o);r.headers.set('Vary','Origin');return r;}
+export function corsPreflight(req:Request,env:Env){const r=new Response(null,{status:204});const o=req.headers.get('Origin');if(o&&corsAllowed(o,env))r.headers.set('Access-Control-Allow-Origin',o);r.headers.set('Access-Control-Allow-Methods','GET, POST, OPTIONS');r.headers.set('Access-Control-Allow-Headers','Content-Type, Authorization');return r;}
+export async function readJson(req:Request):Promise<Record<string,unknown>|null>{try{const b=await req.json();return b&&typeof b==='object'?b as Record<string,unknown>:null;}catch{return null;}}
+export async function sha256Hex(s:string){const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return [...new Uint8Array(d)].map(b=>b.toString(16).padStart(2,'0')).join('');}
+export function timingSafeEqual(a:string,b:string){if(a.length!==b.length)return false;let d=0;for(let i=0;i<a.length;i++)d|=a.charCodeAt(i)^b.charCodeAt(i);return d===0;}
+export function genOtpCode(){const b=new Uint32Array(1);crypto.getRandomValues(b);return String((b[0]!%900000)+100000);}
+export function genToken(){const b=new Uint8Array(32);crypto.getRandomValues(b);return btoa(String.fromCharCode(...b)).replaceAll('+','-').replaceAll('/','_').replaceAll('=','');}
+export function uuidv4(){return crypto.randomUUID();}
+export function canonicalBytes(v:unknown){const t=canonicalize(v);if(!t)throw new Error('canonical');return new TextEncoder().encode(t);}
+function b64url(b:ArrayBuffer){return btoa(String.fromCharCode(...new Uint8Array(b))).replaceAll('+','-').replaceAll('/','_').replaceAll('=','');}
+async function key(raw:string){const b=Uint8Array.from(atob(raw.replaceAll('-','+').replaceAll('_','/')),c=>c.charCodeAt(0));return crypto.subtle.importKey('pkcs8',b,'Ed25519',false,['sign']);}
+export async function opaqueId(p:string,v:string){return sha256Hex(`${p}:${v}`);}
+export async function makeDeliveryRequest(env:Env,to:string,code:string,source:string){const message={subject:'کد ورود mTracker',text:`${code} کد ورود شماست. ۱۰ دقیقه اعتبار دارد.`};const now=Date.now();const request:DeliveryRequest={version:'1',keyId:env.MAIL_SIGNING_KEY_ID,requestId:uuidv4(),issuedAt:now,expiresAt:now+120000,accountId:await opaqueId(env.ACCOUNT_ID_PEPPER,to),sourceId:await opaqueId(env.SOURCE_ID_PEPPER,source),recipient:to,from:env.MAIL_FROM,templateId:'login-code-v1',message,messageHash:await sha256Hex(canonicalize(message)!)};const signature=b64url(await crypto.subtle.sign('Ed25519',await key(env.MAIL_SIGNING_PRIVATE_KEY),canonicalBytes(request)));return {request,signature};}
+export async function sendDeliveryRequest(env:Env,request:DeliveryRequest,signature:string):Promise<{ok:true}|{ok:false}>{try{const r=await fetch(env.MAIL_RELAY_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${env.API_SECRET}`,'X-Mail-Signature':signature},body:JSON.stringify(request)});return r.ok?{ok:true}:{ok:false};}catch{return {ok:false};}}
+export async function sendOtpMail(env:Env,to:string,code:string,source='unknown'):Promise<{ok:true;requestId:string}|{ok:false}>{const {request,signature}=await makeDeliveryRequest(env,to,code,source);const result=await sendDeliveryRequest(env,request,signature);return result.ok?{ok:true,requestId:request.requestId}:{ok:false};}
