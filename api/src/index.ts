@@ -1,4 +1,5 @@
 /* mTracker API worker — auth surface (sync endpoints land here next).
+ * Deployment marker: cloudflare production branch trigger.
  * DB via the HYPERDRIVE binding (dashboard-attached, same Aiven database the
  * Node API uses). Mail via the standalone mail-relay worker + Resend.
  */
