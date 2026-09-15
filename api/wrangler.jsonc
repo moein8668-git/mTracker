@@ -19,6 +19,12 @@
       "binding": "MAIN_MAIL",
       "service": "main-mail"
     }
+  ],
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "70b5ef5ad5e4422189e85e6d40b74220"
+    }
   ]
   //
   // Bindings — Settings → Bindings → Add → Hyperdrive:
