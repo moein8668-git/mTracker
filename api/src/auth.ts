@@ -54,7 +54,12 @@ export async function handleOtp(req: Request, env: Env, sql: Sql): Promise<Respo
   if (!permitted) return json(req, env, { error: 'throttled' }, 429);
   const sent = await sendDeliveryRequest(env, request, signature);
   await sql`UPDATE otp_delivery_attempts SET relay_status=${sent.ok ? 'accepted' : 'failed'} WHERE request_id=${request.requestId}`;
-  if (!sent.ok) return json(req, env, { error: 'mail' }, 502);
+  if (!sent.ok) {
+    console.log(JSON.stringify({ event: 'mail_relay_failed', requestId: request.requestId, relayStatus: sent.status }));
+    const debugToken = req.headers.get('X-Mail-Relay-Debug') ?? '';
+    const debugging = Boolean(env.MAIL_RELAY_DEBUG_TOKEN) && timingSafeEqual(debugToken, env.MAIL_RELAY_DEBUG_TOKEN!);
+    return json(req, env, debugging ? { error: 'mail', relayStatus: sent.status ?? 'network', requestId: request.requestId } : { error: 'mail' }, 502);
+  }
   return json(req, env, { ok: true });
 }
 
