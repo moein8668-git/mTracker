@@ -1,5 +1,6 @@
 /* Layer 5 — delegated events. Wires the whole UI to Repo. */
 import { appSettings, fmtHours } from '../settings';
+import type { SyncEngine } from '../sync/engine';
 import { todayIso, isoOf, isoToDate, addDays, monthStartOf, prevMonthStart, nextMonthStart, jLabel } from '../jalali';
 import { state } from './state';
 import { toast } from './bits';
@@ -8,7 +9,7 @@ import { hideDayPop, showDayPop } from './daypop';
 import { closeModal, openEntryModal, openTaskModal, openPomodorusModal, openSettingsModal, updatePomodorusLink, toggleEntryCalendar, refreshEntryCalendar, pickEntryDate } from './modals';
 import { exportCsv, exportJson, importCsvRows, validateBackup } from '../transfer';
 import { render } from './render';
-import { clampHours, toNumber, normalizeDaysPerWeek } from '../utils';
+import { clampHours, toNumber, normalizeDaysPerWeek, normDigits } from '../utils';
 import { fetchViaProxy, importPomodorusProfile, normalizePomodorusProfile } from '../pomodorus';
 import { calGridHTML } from './jcal';
 
@@ -111,7 +112,7 @@ async function handlePomodorusAutoFetch(repo: Repo): Promise<void> {
   }
 }
 
-export function attachEvents(repo: Repo): void {
+export function attachEvents(repo: Repo, sync: SyncEngine): void {
   document.addEventListener('click', e => {
     const t = e.target;
     if (!(t instanceof Element)) return;
@@ -156,14 +157,54 @@ export function attachEvents(repo: Repo): void {
         openPomodorusModal(repo);
         break;
       case 'open-settings':
-        openSettingsModal(repo);
+        openSettingsModal(repo, sync);
         break;
-      case 'set-setting':
-        if (d.key === 'timeFormat') repo.db.settings.timeFormat = d.val === 'decimal' ? 'decimal' : 'hm';
-        else repo.db.settings.chartDir = d.val === 'rtl' ? 'rtl' : 'ltr';
-        repo.persist();
-        openSettingsModal(repo);
+      case 'set-setting': {
+        if (d.key === 'timeFormat') repo.updateSettings({ timeFormat: d.val === 'decimal' ? 'decimal' : 'hm' });
+        else repo.updateSettings({ chartDir: d.val === 'rtl' ? 'rtl' : 'ltr' });
+        openSettingsModal(repo, sync);
         render(repo);
+        break;
+      }
+      case 'auth-send-otp': {
+        const emailInput = document.getElementById('auth-email');
+        if (!(emailInput instanceof HTMLInputElement) || !emailInput.value.includes('@')) {
+          toast('ایمیل معتبر وارد کن');
+          break;
+        }
+        void sync.requestOtp(emailInput.value.trim()).then(r => {
+          toast('کد ورود ارسال شد' + (r.devCode ? ' — کد آزمایشی: ' + r.devCode : ''));
+          openSettingsModal(repo, sync);
+        }).catch(() => toast('ارسال کد ناموفق بود؛ سرور در دسترس نیست'));
+        break;
+      }
+      case 'auth-edit-email':
+        sync.pendingEmail = null;
+        openSettingsModal(repo, sync);
+        break;
+      case 'auth-verify': {
+        const codeInput = document.getElementById('auth-code');
+        if (!(codeInput instanceof HTMLInputElement) || !sync.pendingEmail) break;
+        void sync.verifyOtp(sync.pendingEmail, normDigits(codeInput.value)).then(() => {
+          toast('ورود انجام شد');
+          openSettingsModal(repo, sync);
+          render(repo);
+        }).catch(() => toast('کد نامعتبر است'));
+        break;
+      }
+      case 'auth-signout':
+        void sync.signOut().then(() => {
+          toast('از حساب خارج شدی؛ داده‌های محلی حفظ شدند');
+          openSettingsModal(repo, sync);
+          render(repo);
+        });
+        break;
+      case 'sync-now':
+        void sync.syncNow().then(() => {
+          const err = sync.getLastError();
+          toast(err ? 'همگام‌سازی ناموفق: ' + err : 'همگام‌سازی انجام شد');
+          openSettingsModal(repo, sync);
+        });
         break;
       case 'pomo-autofetch':
         void handlePomodorusAutoFetch(repo);

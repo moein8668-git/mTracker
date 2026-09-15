@@ -77,13 +77,43 @@ describe('Repo', () => {
     expect(repo.entries[0]!.hours).toBe(2);
   });
 
-  it('removing a task cascades its entries', () => {
+  it('removing a task tombstones it in raw db but hides it from getters', () => {
     const repo = new Repo(null, noop);
     const t = repo.createTask({ name: 'x' });
     repo.upsertEntry({ taskId: t.id, date: '2026-09-01', hours: 1 });
     repo.removeTask(t.id);
+    /* raw db keeps tombstones (sync needs them) */
+    expect(repo.db.tasks).toHaveLength(1);
+    expect(repo.db.tasks[0]!.deletedAt).toBeDefined();
+    expect(repo.db.entries).toHaveLength(1);
+    expect(repo.db.entries[0]!.deletedAt).toBeDefined();
+    /* read paths hide them */
     expect(repo.tasks).toHaveLength(0);
     expect(repo.entries).toHaveLength(0);
+    expect(repo.task(t.id)).toBeUndefined();
+    expect(repo.entriesForTask(t.id)).toHaveLength(0);
+  });
+
+  it('upserting hours for a tombstoned entry resurrects it (no duplicate row)', () => {
+    const repo = new Repo(null, noop);
+    const t = repo.createTask({ name: 'x' });
+    const e = repo.upsertEntry({ taskId: t.id, date: '2026-09-01', hours: 1 });
+    repo.removeEntry(e.id);
+    expect(repo.entries).toHaveLength(0);
+    repo.upsertEntry({ taskId: t.id, date: '2026-09-01', hours: 2 });
+    expect(repo.entries).toHaveLength(1);
+    expect(repo.entries[0]!.hours).toBe(2);
+    expect(repo.db.entries).toHaveLength(1);
+  });
+
+  it('a task edit does not clear a pending settings dirty flag', () => {
+    const repo = new Repo(null, noop);
+    repo.updateSettings({ timeFormat: 'decimal' });
+    expect(repo.peekDirty().ids.s).toBe(true);
+    const t = repo.createTask({ name: 'y' });
+    repo.upsertEntry({ taskId: t.id, date: '2026-09-01', hours: 1 });
+    expect(repo.peekDirty().ids.s).toBe(true); /* still queued */
+    expect(repo.peekDirty().settings).not.toBeNull();
   });
   it('Storage.load returns null on corrupted JSON and keeps a rescue copy', () => {
     mem.setItem(DB_KEY, '{broken json');

@@ -8,6 +8,11 @@ __pycache__/
 # Pomodorus proxy worker (private, user-deployed) — never commit
 proxy-worker/
 
-# Bun lockfiles (project runs via npm)
+# Server (local dev secrets + build output)
+server/.env
+server/dist/
 bun.lock
 bun.lockb
+
+# Dashboard-managed mail relay (see email-worker/worker.js, deployed via paste)
+worker/

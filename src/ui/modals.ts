@@ -1,9 +1,12 @@
 /* Modal layer — open/close, entry form, task form, settings. */
 import type { Repo } from '../storage';
+import type { SyncEngine } from '../sync/engine';
 import { FA_DATE_FULL, appSettings, fmtHours, faNum, type AppSettings } from '../settings';
 import { todayIso, isoToDate, isoOf, addDays, toJ, monthMeta, monthStartOf, prevMonthStart, nextMonthStart, jLabel } from '../jalali';
 import { PALETTE, esc, normalizeDaysPerWeek } from '../utils';
 import { WEEK_HEAD } from './wall';
+
+/* OTP step-2 state lives on sync.pendingEmail (email captured at «ارسال کد ورود»). */
 
 export function openModal(html: string): void {
   const root = document.getElementById('modal-root');
@@ -170,10 +173,47 @@ export function openTaskModal(repo: Repo, taskId: string | null = null): void {
 }
 
 /* ---------- settings ---------- */
-export function openSettingsModal(repo: Repo): void {
+export function openSettingsModal(repo: Repo, sync?: SyncEngine): void {
   const s = appSettings(repo.db);
+  const auth = sync?.getAuth();
+  let account = '';
+
+  if (!sync) {
+    /* sync not wired (defensive) — omit section */
+  } else if (auth) {
+    const status = sync.getStatus();
+    const last = sync.getLastSyncAt();
+    const err = sync.getLastError();
+    const statusLine = status === 'error'
+      ? '<div class="set-sub" style="color:var(--bad)">خطا: ' + esc(err || 'نامعلوم') + '</div>'
+      : '<div class="set-sub">آخرین همگام‌سازی: ' + (last ? esc(last) : 'هنوز همگام‌سازی نشده') + '</div>';
+    account =
+      '<div class="set-row"><div class="set-label">حساب و همگام‌سازی <span class="set-sub">— وارد شده با ' + esc(auth.email) + '</span></div>' +
+      '<div class="btnrow">' +
+      '<button type="button" class="btn small" data-action="sync-now">همگام‌سازی کن</button>' +
+      '<button type="button" class="btn small danger" data-action="auth-signout">خروج از حساب</button>' +
+      '</div></div>' + statusLine;
+  } else if (sync?.pendingEmail) {
+    account =
+      '<div class="set-row"><div class="set-label">حساب و همگام‌سازی</div>' +
+      '<div class="set-sub">کد ۶ رقمی ارسال‌شده به <b dir="ltr">' + esc(sync.pendingEmail) + '</b> را وارد کن.</div>' +
+      '<label style="margin:10px 0 6px">کد ورود<input type="text" id="auth-code" inputmode="numeric" maxlength="6" dir="ltr" autocomplete="one-time-code"></label>' +
+      '<div class="btnrow">' +
+      '<button type="button" class="btn primary small" data-action="auth-verify">تأیید و ورود</button>' +
+      '<button type="button" class="btn ghost small" data-action="auth-edit-email">ویرایش ایمیل</button>' +
+      '<button type="button" class="btn ghost small" data-action="auth-send-otp">ارسال مجدد کد</button>' +
+      '</div></div>';
+  } else {
+    account =
+      '<div class="set-row"><div class="set-label">حساب و همگام‌سازی <span class="set-sub">— همگام‌سازی بین دستگاه‌ها با ایمیل</span></div>' +
+      '<label style="margin:0 0 8px">ایمیل<input type="email" id="auth-email" dir="ltr" autocomplete="email"></label>' +
+      '<button type="button" class="btn primary small" data-action="auth-send-otp">ارسال کد ورود</button>' +
+      '</div>';
+  }
+
   openModal('<div class="settings">' +
     '<h3>تنظیمات</h3>' +
+    account +
     '<div class="set-row"><div class="set-label">جهت نمودارها <span class="set-sub">— پیش‌فرض: چپ‌به‌راست</span></div>' +
     '<div class="seg">' +
     '<button data-action="set-setting" data-key="chartDir" data-val="ltr"' + (s.chartDir === 'ltr' ? ' class="active"' : '') + '>چپ‌به‌راست</button>' +

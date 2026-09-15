@@ -9,6 +9,8 @@ export interface Task {
   daysPerWeek: number;
   createdAt: string;
   archivedAt: string | null;
+  updatedAt?: string;
+  deletedAt?: string | null;
 }
 
 export interface Entry {
@@ -19,6 +21,7 @@ export interface Entry {
   note: string;
   createdAt: string;
   updatedAt?: string;
+  deletedAt?: string | null;
   /** true when this entry was created/last-updated by a Pomodorus import. */
   pomo?: boolean;
 }
@@ -26,6 +29,7 @@ export interface Entry {
 export interface Settings {
   chartDir?: 'ltr' | 'rtl';
   timeFormat?: 'hm' | 'decimal';
+  updatedAt?: string;
 }
 
 export interface DBData {

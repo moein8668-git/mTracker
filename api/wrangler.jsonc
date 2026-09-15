@@ -1,0 +1,24 @@
+{
+  "name": "mtracker",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-06-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true
+  //
+  // Bindings — Settings → Bindings → Add → Hyperdrive:
+  //   binding name HYPERDRIVE, attached to your Aiven Hyperdrive config.
+  //   (Create the config first at Workers & Pages → Hyperdrive, using the
+  //   bare Aiven URL: ...?sslmode=require with NO sslrootcert file ref.)
+  //
+  // Variables — Settings → Variables:
+  //   MAIL_RELAY_URL — https://main-mail.<account>.workers.dev/send
+  //   MAIL_FROM      — mTracker <login@e.moein8668.xyz> (Resend-verified domain)
+  //   CORS_ORIGIN    — comma-separated browser origins, e.g.
+  //                    https://app.yourdomain.com,http://localhost:5189
+  //
+  // Secrets — Settings → Secrets and variables → Secrets:
+  //   API_SECRET     — same value as the mail relay's API_SECRET.
+  //   OTP_PEPPER     — MUST equal the Node API's OTP_PEPPER while both share
+  //                    the Aiven DB (codes are peppered hashes). Rotate both
+  //                    together or cross-issued codes stop verifying.
+}
