@@ -1,6 +1,6 @@
 import canonicalize from 'canonicalize';
 
-export interface Env { HYPERDRIVE: Hyperdrive; MAIN_MAIL?: Fetcher; MAIL_RELAY_URL: string; API_SECRET: string; MAIL_FROM: string; MAIL_SIGNING_PRIVATE_KEY: string; MAIL_SIGNING_KEY_ID: string; SOURCE_ID_PEPPER: string; ACCOUNT_ID_PEPPER: string; CORS_ORIGIN?: string; OTP_PEPPER?: string; MAIL_RELAY_DEBUG_TOKEN?: string; }
+export interface Env { ASSETS: Fetcher; HYPERDRIVE: Hyperdrive; MAIN_MAIL?: Fetcher; MAIL_RELAY_URL: string; API_SECRET: string; MAIL_FROM: string; MAIL_SIGNING_PRIVATE_KEY: string; MAIL_SIGNING_KEY_ID: string; SOURCE_ID_PEPPER: string; ACCOUNT_ID_PEPPER: string; CORS_ORIGIN?: string; OTP_PEPPER?: string; MAIL_RELAY_DEBUG_TOKEN?: string; }
 export interface DeliveryRequest { version:'1'; keyId:string; requestId:string; issuedAt:number; expiresAt:number; accountId:string; sourceId:string; recipient:string; from:string; templateId:'login-code-v1'; message:{subject:string;text:string}; messageHash:string; }
 export function corsAllowed(origin:string,env:Env){return (env.CORS_ORIGIN??'').split(',').map(s=>s.trim()).includes(origin);}
 export function json(req:Request,env:Env,body:unknown,status=200){const r=Response.json(body,{status});const o=req.headers.get('Origin');if(o&&corsAllowed(o,env))r.headers.set('Access-Control-Allow-Origin',o);r.headers.set('Vary','Origin');return r;}
