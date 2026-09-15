@@ -3,7 +3,13 @@
   "main": "src/index.ts",
   "compatibility_date": "2025-06-01",
   "compatibility_flags": ["nodejs_compat"],
-  "workers_dev": true
+  "workers_dev": true,
+  "services": [
+    {
+      "binding": "MAIN_MAIL",
+      "service": "main-mail"
+    }
+  ]
   //
   // Bindings — Settings → Bindings → Add → Hyperdrive:
   //   binding name HYPERDRIVE, attached to your Aiven Hyperdrive config.
