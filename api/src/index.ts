@@ -4,9 +4,10 @@
  * Node API uses). Mail via the standalone mail-relay worker + Resend.
  */
 
-import postgres from 'postgres';
 import { json, corsPreflight, type Env } from './util.js';
 import { handleOtp, handleVerify, handleLogout, handleMe } from './auth.js';
+import { createSql } from './db.js';
+import { handlePull, handlePush } from './sync.js';
 
 export default {
   async fetch(req: Request, env: Env): Promise<Response> {
@@ -20,23 +21,13 @@ export default {
       return json(req, env, { error: 'misconfigured' }, 500);
     }
 
-    const sql = postgres(env.HYPERDRIVE.connectionString);
-    try {
-      if (url.pathname === '/api/auth/otp' && req.method === 'POST') {
-        return await handleOtp(req, env, sql);
-      }
-      if (url.pathname === '/api/auth/verify' && req.method === 'POST') {
-        return await handleVerify(req, env, sql);
-      }
-      if (url.pathname === '/api/auth/logout' && req.method === 'POST') {
-        return await handleLogout(req, env, sql);
-      }
-      if (url.pathname === '/api/me' && req.method === 'GET') {
-        return await handleMe(req, env, sql);
-      }
-      return json(req, env, { error: 'not_found' }, 404);
-    } finally {
-      await sql.end({ timeout: 5 }).catch(() => {});
-    }
+    const sql = createSql(env);
+    if (url.pathname === '/api/auth/otp' && req.method === 'POST') return handleOtp(req, env, sql);
+    if (url.pathname === '/api/auth/verify' && req.method === 'POST') return handleVerify(req, env, sql);
+    if (url.pathname === '/api/auth/logout' && req.method === 'POST') return handleLogout(req, env, sql);
+    if (url.pathname === '/api/me' && req.method === 'GET') return handleMe(req, env, sql);
+    if (url.pathname === '/api/sync/push' && req.method === 'POST') return handlePush(req, env, sql);
+    if (url.pathname === '/api/sync/pull' && req.method === 'GET') return handlePull(req, env, sql);
+    return json(req, env, { error: 'not_found' }, 404);
   },
 };

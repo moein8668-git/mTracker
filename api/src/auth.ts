@@ -41,8 +41,12 @@ export async function handleOtp(req: Request, env: Env, sql: Sql): Promise<Respo
   const source = req.headers.get('CF-Connecting-IP') ?? 'unknown';
   const { request, signature } = await makeDeliveryRequest(env, email, code, source);
   const permitted = await sql.begin(async (tx) => {
-    const locks = [request.recipient, request.sourceId, request.accountId].sort();
-    for (const lock of locks) await tx`SELECT pg_advisory_xact_lock(hashtext(${lock}))`;
+    const locks: Array<[string, string]> = [['account', request.accountId], ['recipient', request.accountId], ['source', request.sourceId]];
+    locks.sort(([kindA, idA], [kindB, idB]) => `${kindA}:${idA}`.localeCompare(`${kindB}:${idB}`));
+    for (const [kind, scopeId] of locks) {
+      await tx`INSERT INTO delivery_limit_scopes (kind, scope_id) VALUES (${kind}, ${scopeId}) ON CONFLICT DO NOTHING`;
+      await tx`SELECT kind FROM delivery_limit_scopes WHERE kind=${kind} AND scope_id=${scopeId} FOR UPDATE`;
+    }
     const recipient = await tx`SELECT count(*)::int AS n FROM otp_delivery_attempts WHERE recipient_hash=${request.accountId} AND created_at > now() - interval '15 minutes'`;
     const sourceRows = await tx`SELECT count(*)::int AS n FROM otp_delivery_attempts WHERE source_id=${request.sourceId} AND created_at > now() - interval '1 hour'`;
     const account = await tx`SELECT count(*)::int AS n FROM otp_delivery_attempts WHERE account_id=${request.accountId} AND created_at > now() - interval '1 day'`;
