@@ -17,6 +17,9 @@ export default {
     if (req.method === 'GET' && url.pathname === '/api/health') {
       return json(req, env, { ok: true });
     }
+    if (!url.pathname.startsWith('/api/')) {
+      return env.ASSETS.fetch(req);
+    }
     if (!env.HYPERDRIVE) {
       return json(req, env, { error: 'misconfigured' }, 500);
     }
