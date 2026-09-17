@@ -7,7 +7,7 @@ import { toast } from './bits';
 import { Repo } from '../storage';
 import { hideDayPop, showDayPop } from './daypop';
 import { closeModal, openEntryModal, openTaskModal, openPomodorusModal, openSettingsModal, updatePomodorusLink, toggleEntryCalendar, refreshEntryCalendar, pickEntryDate } from './modals';
-import { exportCsv, exportJson, importCsvRows, validateBackup } from '../transfer';
+import { exportCsv, exportJson, importCsvRows } from '../transfer';
 import { render } from './render';
 import { clampHours, toNumber, normalizeDaysPerWeek, normDigits } from '../utils';
 import { fetchViaProxy, importPomodorusProfile, normalizePomodorusProfile } from '../pomodorus';
@@ -185,25 +185,34 @@ export function attachEvents(repo: Repo, sync: SyncEngine): void {
       case 'auth-verify': {
         const codeInput = document.getElementById('auth-code');
         if (!(codeInput instanceof HTMLInputElement) || !sync.pendingEmail) break;
-        void sync.verifyOtp(sync.pendingEmail, normDigits(codeInput.value)).then(() => {
-          toast('ورود انجام شد');
+        void sync.verifyOtp(sync.pendingEmail, normDigits(codeInput.value)).then(result => {
+          toast(result.transitionRequired ? 'پیش از ورود، درباره داده‌های محلی تصمیم بگیر' : 'ورود انجام شد');
           openSettingsModal(repo, sync);
           render(repo);
-        }).catch(() => toast('کد نامعتبر است'));
+        }).catch(() => toast('کد نامعتبر است یا شروع همگام‌سازی ناموفق بود'));
         break;
       }
-      case 'auth-signout':
-        void sync.signOut().then(() => {
-          toast('از حساب خارج شدی؛ داده‌های محلی حفظ شدند');
-          openSettingsModal(repo, sync);
-          render(repo);
+      case 'auth-transition-backup': {
+        try { const { count } = exportCsv(repo); toast(faNumSafe(count) + ' ثبت در فایل CSV پشتیبان گرفته شد'); }
+        catch { toast('دانلود پشتیبان ناموفق بود؛ داده‌های محلی حفظ شدند'); }
+        break;
+      }
+      case 'auth-transition-confirm':
+        void sync.confirmAccountTransition().then(ok => {
+          toast(ok ? 'ورود انجام شد؛ داده‌های حساب نمایش داده می‌شوند' : 'شروع همگام‌سازی ناموفق بود؛ داده‌های محلی حفظ شدند');
+          openSettingsModal(repo, sync); render(repo);
         });
         break;
-      case 'sync-now':
-        void sync.syncNow().then(() => {
-          const err = sync.getLastError();
-          toast(err ? 'همگام‌سازی ناموفق: ' + err : 'همگام‌سازی انجام شد');
+      case 'auth-transition-cancel':
+        sync.cancelAccountTransition();
+        toast('ورود لغو شد؛ داده‌های محلی بدون تغییر ماندند');
+        openSettingsModal(repo, sync);
+        break;
+      case 'auth-signout':
+        void sync.signOut().then(() => {
+          toast('از حساب خارج شدی؛ داده‌های حساب دیگر در حالت محلی نمایش داده نمی‌شوند');
           openSettingsModal(repo, sync);
+          render(repo);
         });
         break;
       case 'pomo-autofetch':
@@ -393,6 +402,10 @@ export function attachEvents(repo: Repo, sync: SyncEngine): void {
         toast('بکاپ کامل دانلود شد');
         break;
       case 'import-click': {
+        if (!sync.getAuth() || !repo.isAccountMode()) {
+          toast('برای بازگردانی CSV ابتدا با همان حساب ایمیل وارد شو');
+          break;
+        }
         const input = document.getElementById('import-file');
         if (input instanceof HTMLInputElement) input.click();
         break;
@@ -561,17 +574,16 @@ export function attachEvents(repo: Repo, sync: SyncEngine): void {
     if (t.id === 'import-file') {
       const f = t.files && t.files[0];
       if (!f) return;
+      if (!sync.getAuth() || !repo.isAccountMode()) {
+        toast('برای بازگردانی CSV ابتدا با همان حساب ایمیل وارد شو');
+        t.value = '';
+        return;
+      }
       const reader = new FileReader();
       reader.onload = () => {
         const txt = String(reader.result || '');
         if (f.name.toLowerCase().endsWith('.json')) {
-          const backup = validateBackup(txt);
-          if (!backup) { toast('فایل بکاپ معتبر نیست'); return; }
-          const fresh = new Repo(backup, msg => toast(msg));
-          repo.adopt(fresh.db);
-          toast('بازیابی شد: ' + new Intl.NumberFormat('fa-IR').format(repo.tasks.length) + ' تسک، ' + new Intl.NumberFormat('fa-IR').format(repo.entries.length) + ' ثبت');
-          closeModal();
-          render(repo);
+          toast('برای بازگردانی در حساب، فایل CSV را انتخاب کن');
         } else {
           const { added, created, skipped } = importCsvRows(repo, txt);
           toast(new Intl.NumberFormat('fa-IR').format(added) + ' ثبت اضافه شد، ' + new Intl.NumberFormat('fa-IR').format(created) + ' تسک جدید، ' + new Intl.NumberFormat('fa-IR').format(skipped) + ' رد نامعتبر');

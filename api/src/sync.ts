@@ -46,6 +46,11 @@ function push(value: unknown): PushInput | null {
 }
 const safeTime = (value: string | null | undefined): string | null => value && !Number.isNaN(Date.parse(value)) ? new Date(value).toISOString() : null;
 const iso = (value: unknown): string | null => value instanceof Date ? value.toISOString() : typeof value === 'string' ? safeTime(value) : null;
+/** postgres.js may deserialize DATE as Date; the browser contract is always date-only. */
+export const dateOnly = (value: unknown): string | null => {
+  if (value instanceof Date) return value.toISOString().slice(0, 10);
+  return typeof value === 'string' && DATE.test(value.slice(0, 10)) ? value.slice(0, 10) : null;
+};
 
 export async function handlePush(req: Request, env: Env, sql: Sql): Promise<Response> {
   const session = await authSession(req, sql); if (!session) return json(req, env, { error:'unauthorized' }, 401);
@@ -74,5 +79,5 @@ export async function handlePull(req: Request, env: Env, sql: Sql): Promise<Resp
     sql`SELECT data,updated_at,seq FROM user_settings WHERE user_id=${session.user_id} AND seq>${since}`,
   ]);
   const max = Math.max(since,...tasks.map(x=>Number(x.seq)),...entries.map(x=>Number(x.seq)),...setting.map(x=>Number(x.seq)));
-  return json(req, env, { cursor:max, tasks:tasks.map(t=>({id:t.id,name:t.name,targetDailyHours:Number(t.target_daily_hours),color:t.color,daysPerWeek:Number(t.days_per_week),createdAt:iso(t.created_at),archivedAt:iso(t.archived_at),updatedAt:iso(t.updated_at),deletedAt:iso(t.deleted_at)})), entries:entries.map(e=>({id:e.id,taskId:e.task_id,date:e.date,hours:Number(e.hours),note:e.note,pomo:e.pomo,createdAt:iso(e.created_at),updatedAt:iso(e.updated_at),deletedAt:iso(e.deleted_at)})), settings:setting[0] ? {data:setting[0].data,updated_at:iso(setting[0].updated_at)} : null, serverTime:new Date().toISOString() });
+  return json(req, env, { cursor:max, tasks:tasks.map(t=>({id:t.id,name:t.name,targetDailyHours:Number(t.target_daily_hours),color:t.color,daysPerWeek:Number(t.days_per_week),createdAt:iso(t.created_at),archivedAt:iso(t.archived_at),updatedAt:iso(t.updated_at),deletedAt:iso(t.deleted_at)})), entries:entries.map(e=>({id:e.id,taskId:e.task_id,date:dateOnly(e.date) ?? '',hours:Number(e.hours),note:e.note,pomo:e.pomo,createdAt:iso(e.created_at),updatedAt:iso(e.updated_at),deletedAt:iso(e.deleted_at)})), settings:setting[0] ? {data:setting[0].data,updated_at:iso(setting[0].updated_at)} : null, serverTime:new Date().toISOString() });
 }

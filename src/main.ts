@@ -2,7 +2,7 @@
 
 import './styles.css';
 
-import { Storage, Repo } from './storage';
+import { Storage, Repo, accountScope } from './storage';
 
 import { state, parseTabId } from './ui/state';
 
@@ -20,7 +20,15 @@ import { SyncEngine } from './sync/engine';
 
 import { updateSyncChip } from './ui/syncchip';
 
-const repo = new Repo(Storage.load(), msg => toast(msg));
+function initialScope() {
+  try {
+    const auth = JSON.parse(localStorage.getItem('mtracker.auth') || 'null') as { email?: string } | null;
+    return auth?.email ? accountScope(auth.email) : 'local';
+  } catch { return 'local' as const; }
+}
+
+const scope = initialScope();
+const repo = new Repo(Storage.load(scope), msg => toast(msg), scope);
 
 const sync = new SyncEngine(repo, {
   onData: () => render(repo),

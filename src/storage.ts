@@ -5,6 +5,25 @@ import { uid, PALETTE, normalizeDaysPerWeek } from './utils';
 
 export const SCHEMA_VERSION = 4;
 export const DB_KEY = 'mtracker.db.v1';
+export const ACCOUNT_KEY_PREFIX = 'mtracker.account.v1:';
+
+export type StorageScope = 'local' | `account:${string}`;
+
+export function normalizeAccountEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+export function accountScope(email: string): StorageScope {
+  return `account:${normalizeAccountEmail(email)}`;
+}
+
+function dbKey(scope: StorageScope): string {
+  return scope === 'local' ? DB_KEY : ACCOUNT_KEY_PREFIX + scope.slice('account:'.length);
+}
+
+function dirtyKey(scope: StorageScope): string {
+  return `${dbKey(scope)}.dirty`;
+}
 
 /**
  * Upgrade path for future schema versions. Rejects unknown (newer) versions
@@ -43,21 +62,26 @@ function emptyDb(): DBData {
 }
 
 export const Storage = {
-  load(): DBData | null {
+  load(scope: StorageScope = 'local'): DBData | null {
     try {
-      const raw = localStorage.getItem(DB_KEY);
+      const key = dbKey(scope);
+      const raw = localStorage.getItem(key);
       if (!raw) return null;
       return migrate(JSON.parse(raw));
     } catch (e) {
       console.error('mTracker: corrupted storage', e);
-      try { localStorage.setItem('mtracker.corrupt-backup', localStorage.getItem(DB_KEY) || ''); } catch { /* ignore */ }
+      try { localStorage.setItem('mtracker.corrupt-backup', localStorage.getItem(dbKey(scope)) || ''); } catch { /* ignore */ }
       return null;
     }
   },
-  save(db: DBData, warn: (msg: string) => void): void {
-    try { localStorage.setItem(DB_KEY, JSON.stringify(db)); }
+  save(scope: StorageScope, db: DBData, warn: (msg: string) => void): void {
+    try { localStorage.setItem(dbKey(scope), JSON.stringify(db)); }
     catch { warn('ذخیره‌سازی ناموفق بود؛ فضای مرورگر پر است؟'); }
-  }
+  },
+  clear(scope: StorageScope): void {
+    localStorage.removeItem(dbKey(scope));
+    localStorage.removeItem(dirtyKey(scope));
+  },
 };
 
 export interface ToastFn { (msg: string): void; }
@@ -65,12 +89,14 @@ export interface ToastFn { (msg: string): void; }
 export class Repo {
   db: DBData;
   private warn: ToastFn;
+  private scope: StorageScope;
   version = 0;
   private listeners = new Set<() => void>();
 
-  constructor(db: DBData | null, warn: ToastFn) {
+  constructor(db: DBData | null, warn: ToastFn, scope: StorageScope = 'local') {
     this.db = db ?? emptyDb();
     this.warn = warn;
+    this.scope = scope;
     if (!Array.isArray(this.db.tasks)) this.db.tasks = [];
     if (!Array.isArray(this.db.entries)) this.db.entries = [];
     if (!this.db.settings || typeof this.db.settings !== 'object') this.db.settings = {};
@@ -93,21 +119,39 @@ export class Repo {
 
   persist(): void {
     this.version++;
-    Storage.save(this.db, this.warn);
+    Storage.save(this.scope, this.db, this.warn);
+    this.listeners.forEach(l => l());
+  }
+
+  getScope(): StorageScope { return this.scope; }
+  isAccountMode(): boolean { return this.scope !== 'local'; }
+
+  /** Switch the visible dataset without merging it with the previous one. */
+  switchScope(scope: StorageScope): void {
+    if (scope === this.scope) return;
+    this.persist();
+    this.scope = scope;
+    this.db = Storage.load(scope) ?? emptyDb();
+    if (!Array.isArray(this.db.tasks)) this.db.tasks = [];
+    if (!Array.isArray(this.db.entries)) this.db.entries = [];
+    if (!this.db.settings || typeof this.db.settings !== 'object') this.db.settings = {};
+    this.loadDirty();
+    this.version++;
     this.listeners.forEach(l => l());
   }
 
   reset(): void {
     this.db = emptyDb();
-    this.markAllDirty();
+    if (this.isAccountMode()) this.markAllDirty();
     this.persist();
   }
 
   private dirty: { t: string[]; e: string[]; s: boolean } = { t: [], e: [], s: false };
 
   loadDirty(): void {
+    if (!this.isAccountMode()) { this.dirty = { t: [], e: [], s: false }; return; }
     try {
-      const raw = localStorage.getItem('mtracker.sync.dirty');
+      const raw = localStorage.getItem(dirtyKey(this.scope));
       if (raw) this.dirty = JSON.parse(raw);
     } catch {
       this.dirty = { t: [], e: [], s: false };
@@ -115,10 +159,11 @@ export class Repo {
   }
 
   markDirty({ tasks: taskIds, entries: entryIds, settings }: { tasks?: string[]; entries?: string[]; settings?: boolean }): void {
+    if (!this.isAccountMode()) return;
     if (taskIds) this.dirty.t = [...new Set([...this.dirty.t, ...taskIds])];
     if (entryIds) this.dirty.e = [...new Set([...this.dirty.e, ...entryIds])];
     if (settings) this.dirty.s = true;
-    localStorage.setItem('mtracker.sync.dirty', JSON.stringify(this.dirty));
+    localStorage.setItem(dirtyKey(this.scope), JSON.stringify(this.dirty));
   }
 
   updateSettings(patch: Partial<Settings>): void {
@@ -141,12 +186,13 @@ export class Repo {
     this.dirty.t = this.dirty.t.filter(id => !ids.t.includes(id));
     this.dirty.e = this.dirty.e.filter(id => !ids.e.includes(id));
     this.dirty.s = this.dirty.s && !ids.s;
-    localStorage.setItem('mtracker.sync.dirty', JSON.stringify(this.dirty));
+    localStorage.setItem(dirtyKey(this.scope), JSON.stringify(this.dirty));
   }
 
   markAllDirty(): void {
+    if (!this.isAccountMode()) return;
     this.dirty = { t: this.db.tasks.map(t => t.id), e: this.db.entries.map(e => e.id), s: true };
-    localStorage.setItem('mtracker.sync.dirty', JSON.stringify(this.dirty));
+    localStorage.setItem(dirtyKey(this.scope), JSON.stringify(this.dirty));
   }
 
   applySync(data: { tasks?: Task[]; entries?: Entry[]; settings?: Settings }): void {

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { migrate, Repo, SCHEMA_VERSION, Storage, DB_KEY } from '../src/storage';
+import { migrate, Repo, SCHEMA_VERSION, Storage, DB_KEY, accountScope } from '../src/storage';
 
 interface MemStorageLike {
   map: Map<string, string>;
@@ -107,7 +107,8 @@ describe('Repo', () => {
   });
 
   it('a task edit does not clear a pending settings dirty flag', () => {
-    const repo = new Repo(null, noop);
+    const scope = accountScope('test@example.com');
+    const repo = new Repo(null, noop, scope);
     repo.updateSettings({ timeFormat: 'decimal' });
     expect(repo.peekDirty().ids.s).toBe(true);
     const t = repo.createTask({ name: 'y' });
