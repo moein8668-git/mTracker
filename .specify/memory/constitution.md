@@ -1,9 +1,9 @@
 <!--
 Sync Impact Report
-- Version change: 3.0.0 to 3.1.0
+- Version change: 3.1.0 to 3.2.0
 - Modified principles: I. Two-Worker Boundaries and Deployment; V. Narrow, Testable, Observable
-  Delivery → V. Narrow, Testable, Observable Delivery and Storage Modes
-- Added sections: Local-Only and Account-Sync Data Modes
+  Delivery and Storage Modes; Local-Only and Account-Sync Data Modes
+- Added sections: none
 - Removed sections: none
 - Follow-up TODOs: TODO(RATIFICATION_DATE) requires the original adoption date.
 -->
@@ -104,9 +104,9 @@ without retaining sensitive payload data.
 While signed out, mTracker MUST store and operate on the browser's local-only dataset and MUST
 not synchronize it. While signed in, mTracker MUST use only the authenticated account dataset,
 automatically synchronizing every accepted change with that account. At the transition from
-local-only to account-sync mode, the application MUST clearly warn that local-only records will
-be removed from the active dataset and MUST offer a CSV backup before the user confirms the
-transition. A CSV backup MAY later be restored into the signed-in account through an explicit
+local-only to account-sync mode, the application MUST present a blocking, explicit warning that
+local-only records will be deleted and MUST visibly offer CSV backup before the user can confirm
+the transition. A CSV backup MAY later be restored into the signed-in account through an explicit
 user action; it MUST NOT be imported implicitly.
 
 ## Architecture Constraints
@@ -139,10 +139,11 @@ path for the main `mtracker` Worker.
 
 The local-only dataset belongs solely to the current browser storage. The account-sync dataset
 belongs solely to the authenticated account and is the only dataset visible after sign-in. Signing
-out returns the browser to local-only mode; it MUST NOT expose or retain account records in the
-local-only dataset. The sign-in transition is destructive for the active local-only dataset only
-after an explicit confirmation that includes the CSV-backup option. Empty local storage may enter
-account-sync mode without a backup warning, but the mode boundary remains explicit.
+out MUST delete the authenticated account's browser cache and its sync metadata before returning
+to local-only mode; it MUST NOT expose or retain account records in browser storage. The sign-in
+transition is destructive for the active local-only dataset only after an explicit confirmation
+that includes a visible CSV-backup option. Empty local storage may enter account-sync mode without
+a backup warning, but the mode boundary remains explicit.
 
 ## Development Workflow
 
@@ -177,4 +178,4 @@ governance; PATCH denotes clarifications and non-semantic corrections. Every
 amendment MUST update the version and last-amended date. Compliance MUST be reviewed
 during design, implementation review, and release review for email-related changes.
 
-**Version**: 3.1.0 | **Ratified**: TODO(RATIFICATION_DATE): original adoption date is unknown | **Last Amended**: 2026-09-17
+**Version**: 3.2.0 | **Ratified**: TODO(RATIFICATION_DATE): original adoption date is unknown | **Last Amended**: 2026-09-17

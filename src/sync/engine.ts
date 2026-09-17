@@ -1,5 +1,5 @@
 import { apiFetch, ApiError } from './api.js';
-import { Storage, accountScope, type Repo } from '../storage.js';
+import { Storage, accountScope, syncCursorKey, type Repo } from '../storage.js';
 import type { Task, Entry, Settings } from '../types.js';
 import { isoOrNull } from './merge.js';
 
@@ -78,12 +78,21 @@ export class SyncEngine {
     return true;
   }
 
-  async signOut(): Promise<void> {
-    try { if (this.auth) await apiFetch('/auth/logout', { method: 'POST', token: this.auth.token }); } catch { /* best-effort */ }
-    this.auth = null; this.saveAuth(); this.pendingTransition = null; this.pendingEmail = null;
-    this.lastSyncAt = null; this.lastError = null;
+  private leaveAccount(): boolean {
+    const departing = this.auth?.email;
     if (this.repo.getScope() !== 'local') this.repo.switchScope('local');
+    this.auth = null;
+    if (!departing) { this.saveAuth(); return true; }
+    return Storage.clearAccount(departing);
+  }
+
+  async signOut(): Promise<boolean> {
+    try { if (this.auth) await apiFetch('/auth/logout', { method: 'POST', token: this.auth.token }); } catch { /* best-effort */ }
+    const cleaned = this.leaveAccount();
+    this.pendingTransition = null; this.pendingEmail = null;
+    this.lastSyncAt = null; this.lastError = null;
     this.setStatus('signed-out'); this.hooks.onData?.();
+    return cleaned;
   }
 
   start(): void {
@@ -107,7 +116,7 @@ export class SyncEngine {
         }});
         this.repo.clearDirty(snapshot.ids);
       }
-      const cursorKey = `mtracker.sync.cursor:${this.auth.email.trim().toLowerCase()}`;
+      const cursorKey = syncCursorKey(this.auth.email);
       let cursor = Number.parseInt(localStorage.getItem(cursorKey) ?? '0', 10) || 0;
       let serverTime: string | null = null;
       while (true) {
@@ -119,9 +128,8 @@ export class SyncEngine {
       this.lastSyncAt = serverTime; this.lastError = null; this.setStatus('idle'); this.hooks.onData?.(); return true;
     } catch (err: unknown) {
       if (err instanceof ApiError && err.status === 401) {
-        this.auth = null;
-        this.saveAuth();
-        if (this.repo.getScope() !== 'local') this.repo.switchScope('local');
+        const cleaned = this.leaveAccount();
+        if (!cleaned) this.lastError = 'پاک‌کردن داده‌های حساب از مرورگر ناموفق بود';
         this.setStatus('signed-out');
         this.hooks.onData?.();
       }

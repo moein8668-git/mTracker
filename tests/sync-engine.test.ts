@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({ apiFetch: vi.fn() }));
 vi.mock('../src/sync/api.js', () => ({ apiFetch: mocks.apiFetch, ApiError: class ApiError extends Error { status = 0; } }));
 
-import { Repo, Storage } from '../src/storage';
+import { Repo, Storage, accountScope, syncCursorKey } from '../src/storage';
 import { SyncEngine } from '../src/sync/engine';
 
 let values: Map<string, string>;
@@ -51,5 +51,23 @@ describe('SyncEngine storage-mode transition', () => {
     await engine.signOut();
     expect(repo.getScope()).toBe('local');
     expect(repo.tasks).toEqual([]);
+  });
+
+  it('deletes the departing account cache, dirty queue, cursor, and auth on sign-out', async () => {
+    const email = 'me@example.com';
+    const scope = accountScope(email);
+    const repo = new Repo(null, noop, scope);
+    repo.createTask({ name: 'cloud task' });
+    values.set(syncCursorKey(email), '42');
+    values.set('mtracker.auth', JSON.stringify({ email, token: 'token' }));
+    const engine = new SyncEngine(repo);
+    mocks.apiFetch.mockResolvedValueOnce({ ok: true });
+
+    await expect(engine.signOut()).resolves.toBe(true);
+    expect(values.has('mtracker.account.v1:me@example.com')).toBe(false);
+    expect(values.has('mtracker.account.v1:me@example.com.dirty')).toBe(false);
+    expect(values.has(syncCursorKey(email))).toBe(false);
+    expect(values.has('mtracker.auth')).toBe(false);
+    expect(repo.getScope()).toBe('local');
   });
 });

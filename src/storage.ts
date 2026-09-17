@@ -25,6 +25,10 @@ function dirtyKey(scope: StorageScope): string {
   return `${dbKey(scope)}.dirty`;
 }
 
+export function syncCursorKey(email: string): string {
+  return `mtracker.sync.cursor:${normalizeAccountEmail(email)}`;
+}
+
 /**
  * Upgrade path for future schema versions. Rejects unknown (newer) versions
  * so a backup from a newer build never silently clobbers current data.
@@ -78,9 +82,23 @@ export const Storage = {
     try { localStorage.setItem(dbKey(scope), JSON.stringify(db)); }
     catch { warn('ذخیره‌سازی ناموفق بود؛ فضای مرورگر پر است؟'); }
   },
-  clear(scope: StorageScope): void {
-    localStorage.removeItem(dbKey(scope));
-    localStorage.removeItem(dirtyKey(scope));
+  clear(scope: StorageScope): boolean {
+    try {
+      localStorage.removeItem(dbKey(scope));
+      localStorage.removeItem(dirtyKey(scope));
+      return true;
+    } catch { return false; }
+  },
+  /** Remove every browser key belonging to one signed-in account, never the local-only dataset. */
+  clearAccount(email: string): boolean {
+    try {
+      const scope = accountScope(email);
+      localStorage.removeItem(dbKey(scope));
+      localStorage.removeItem(dirtyKey(scope));
+      localStorage.removeItem(syncCursorKey(email));
+      localStorage.removeItem('mtracker.auth');
+      return true;
+    } catch { return false; }
   },
 };
 

@@ -209,8 +209,8 @@ export function attachEvents(repo: Repo, sync: SyncEngine): void {
         openSettingsModal(repo, sync);
         break;
       case 'auth-signout':
-        void sync.signOut().then(() => {
-          toast('از حساب خارج شدی؛ داده‌های حساب دیگر در حالت محلی نمایش داده نمی‌شوند');
+        void sync.signOut().then(cleaned => {
+          toast(cleaned ? 'از حساب خارج شدی و داده‌های حساب از این مرورگر پاک شد' : 'خارج شدی، اما پاک‌کردن داده‌های حساب از مرورگر ناموفق بود');
           openSettingsModal(repo, sync);
           render(repo);
         });

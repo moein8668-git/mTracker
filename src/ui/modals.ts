@@ -194,8 +194,8 @@ export function openSettingsModal(repo: Repo, sync?: SyncEngine): void {
       '</div></div>' + statusLine;
   } else if (sync?.hasPendingTransition()) {
     account =
-      '<div class="set-row"><div class="set-label">انتقال به حساب</div>' +
-      '<div class="set-sub">داده‌های فعلی فقط روی همین مرورگر هستند. با ادامه، داده‌های محلی از حالت فعال پاک می‌شوند و فقط داده‌های حساب نمایش داده می‌شوند. می‌توانی اکنون CSV پشتیبان بگیری و بعداً پس از ورود، آن را دستی وارد حساب کنی.</div>' +
+      '<div class="set-row"><div class="set-label" style="color:var(--bad)">هشدار: داده‌های محلی حذف می‌شوند</div>' +
+      '<div class="set-sub">در این مرورگر تسک یا ثبت ساعت داری. با تأیید ورود، همهٔ این داده‌های محلی حذف می‌شوند و فقط داده‌های حسابت نمایش داده می‌شوند. اول می‌توانی فایل CSV پشتیبان بگیری؛ دانلود پشتیبان یا انصراف، هیچ داده‌ای را حذف نمی‌کند.</div>' +
       '<div class="btnrow" style="margin-top:10px">' +
       '<button type="button" class="btn small" data-action="auth-transition-backup">دانلود پشتیبان CSV</button>' +
       '<button type="button" class="btn primary small" data-action="auth-transition-confirm">می‌دانم؛ ورود و پاک‌کردن داده محلی</button>' +
